@@ -7,6 +7,7 @@ import { useModalDismiss } from '@/hooks/useModalDismiss';
 import { ToastContainer } from '@/components/Toast';
 import { RecipeCard } from '@/components/RecipeCard';
 import { RecipeData } from '@/lib/recipe-matcher';
+import { CHATBOT_FAQ_PROMPTS } from '@/lib/chatbot-faq';
 
 interface ProductResult {
   id?: string;
@@ -52,10 +53,10 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
-      // Add welcome message with recipe & shopping examples
+      // Give users FAQ examples that work even when AI is not configured.
       setMessages([{
         id: '1',
-        text: "Hi! I'm your Grocify AI Assistant. 🍳\n\nI can create personalized recipes, calculate ingredients for any serving size, and automatically add them to your Smart Basket at the lowest prices across stores.\n\nTry asking me:\n• \"Give me an easy Chicken Biryani recipe for 4\"\n• \"Quick 15-minute pasta dinner\"\n• \"Show me breakfast products\"\n• \"Find honey under 1000 rupees\"",
+        text: "Hi! I'm your Grocify Assistant. 🛒\n\nI can answer common questions about shopping and using Grocify. Try one of the FAQ suggestions below, or ask about lists, prices, stores, deals, or inventory.",
         sender: 'bot',
         timestamp: new Date(),
         type: 'message'
@@ -63,19 +64,19 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
     }
   }, [isOpen, messages.length]);
 
-  const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+  const sendMessage = async (prompt?: string) => {
+    const currentInput = (prompt ?? inputMessage).trim();
+    if (!currentInput || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputMessage,
+      text: currentInput,
       sender: 'user',
       timestamp: new Date(),
       type: 'message'
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const currentInput = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
@@ -209,12 +210,12 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
               </div>
               <div>
                 <h3 id="chatbot-title" className="text-base font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
-                  Grocify AI Assistant
+                  Grocify Assistant
                   <span className="text-[10px] font-semibold bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300 px-2 py-0.5 rounded-full">
-                    Recipes &amp; Cart
+                    FAQ Help
                   </span>
                 </h3>
-                <p className="text-xs text-gray-500">Ask for recipes, products, or price comparisons</p>
+                <p className="text-xs text-gray-500">Ask about shopping, products, or using Grocify</p>
               </div>
             </div>
             <button
@@ -306,12 +307,28 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
               );
             })}
 
+            {messages.length === 1 && messages[0].sender === 'bot' && (
+              <div className="flex flex-wrap gap-2 pl-1">
+                {CHATBOT_FAQ_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => sendMessage(prompt)}
+                    disabled={isLoading}
+                    className="rounded-full border border-green-200 bg-surface px-3 py-1.5 text-xs text-green-800 transition hover:bg-green-50 disabled:opacity-50 dark:border-green-900 dark:text-green-300 dark:hover:bg-green-950"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {isLoading && (
               <div className="flex justify-start">
                 <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center space-x-2.5 shadow-sm">
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent" />
                   <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
-                    Grocify AI is cooking up an answer...
+                    Finding an answer...
                   </span>
                 </div>
               </div>

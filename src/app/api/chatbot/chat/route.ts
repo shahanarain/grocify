@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { matchIngredientsToCatalog, RecipeData } from '@/lib/recipe-matcher';
+import { getFaqAnswer } from '@/lib/chatbot-faq';
 import OpenAI from 'openai';
 
 // Initialize OpenAI client - will be set when first request comes in
@@ -42,6 +43,16 @@ export async function POST(request: NextRequest) {
         // Cap message length to bound OpenAI token usage / cost per request.
         if (message.length > 500) {
             return NextResponse.json({ error: 'Message is too long (max 500 characters)' }, { status: 400 });
+        }
+
+        // Keep common help available even when no OpenAI key is configured.
+        if (!process.env.OPENAI_API_KEY) {
+            return NextResponse.json({
+                type: 'message',
+                message: getFaqAnswer(message),
+                query: null,
+                mode: 'faq',
+            });
         }
 
         // Initialize OpenAI if not already done
