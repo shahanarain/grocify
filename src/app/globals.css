@@ -1,0 +1,114 @@
+/* Scope content detection to this project's src/ only (path is relative to this
+   CSS file). grocify/ is nested inside the Grocify-DataEngine repo whose
+   .gitignore does NOT exclude venv/ (130MB of Python files); without this,
+   Tailwind v4 auto-scans up to the parent and crawls that whole tree, exhausting
+   memory and crashing the dev server. */
+@import "tailwindcss" source("../");
+
+/* Enable class-based dark mode: `dark:` utilities apply under <html class="dark"> */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f1a13;
+
+  /* Semantic surface token (cards / nav / inputs). White in light mode. */
+  --surface: #ffffff;
+  --surface-2: #f3f6f3;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --font-sans: var(--font-poppins);
+
+  /* Warm, slightly green-tinted neutrals for a friendlier light theme */
+  --color-gray-50: #f4f7f4;
+}
+
+/* ----------------------------------------------------------------------------
+   Dark theme: retint the neutral palette via CSS variables. Because Tailwind v4
+   emits every neutral utility as var(--color-gray-*), overriding them here flips
+   the whole app's grays with no markup changes. Colored accents (green/red/...)
+   are intentionally left bright so they pop against the dark surfaces.
+---------------------------------------------------------------------------- */
+.dark {
+  --background: #0a0e0c;
+  --foreground: #e9efea;
+  --surface: #141c17;
+  --surface-2: #1d2922;
+
+  --color-gray-50: #0a0e0c;   /* page background */
+  --color-gray-100: #1d2922;  /* insets, chips, image placeholders */
+  --color-gray-200: #2a3730;  /* borders, dividers */
+  --color-gray-300: #36453c;  /* borders, disabled */
+  --color-gray-400: #7e8f84;  /* faint icons / text */
+  --color-gray-500: #9aab9f;  /* muted text */
+  --color-gray-600: #b4c3b8;  /* secondary text */
+  --color-gray-700: #cdd8d0;  /* labels */
+  --color-gray-800: #e0e8e2;  /* strong text */
+  --color-gray-900: #eef3ef;  /* headings */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Form controls inherit the themed surface/text instead of UA-default white,
+   so they look correct in dark mode. Explicit bg-* / text-* utilities still win. */
+@layer base {
+  input,
+  textarea,
+  select {
+    background-color: transparent;
+    color: inherit;
+  }
+}
+
+::selection {
+  background: #bbf7d0;
+  color: #052e16;
+}
+
+/* ----------------------------------------------------------------------------
+   Reusable, vibrant component primitives
+---------------------------------------------------------------------------- */
+@layer components {
+  /* Gradient primary CTA — friendly, lively, works in both themes */
+  .btn-primary {
+    background-image: linear-gradient(135deg, #22c55e 0%, #059669 100%);
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgba(16, 185, 129, 0.55);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  }
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.05);
+    box-shadow: 0 10px 22px -8px rgba(16, 185, 129, 0.65);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+    filter: brightness(0.97);
+  }
+  .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  /* Card that lifts on hover */
+  .card-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 30px -18px rgba(0, 0, 0, 0.35);
+  }
+}
