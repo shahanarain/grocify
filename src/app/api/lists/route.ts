@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
-import { db, FieldValue } from '@/lib/firebase-admin';
+import { db, FieldValue } from '@/lib/demo-database';
 
 async function getListProduct(productId: string) {
     const productDoc = await db.collection('products').doc(productId).get();

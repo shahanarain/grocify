@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
-import { db, FieldValue } from '@/lib/firebase-admin';
+import { db, FieldValue } from '@/lib/demo-database';
 
 // GET /api/inventory - List user's home pantry items with stock & expiry statistics
 export async function GET(request: NextRequest) {

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
-import { db } from '@/lib/firebase-admin';
+import { db } from '@/lib/demo-database';
 
-// GET /api/auth/profile - Get user profile
+// GET /api/auth/profile - Get the shared demo profile
 export async function GET(request: NextRequest) {
     try {
         const authResult = await verifyToken(request);

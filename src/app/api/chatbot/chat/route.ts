@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
             }, { status: 503 });
         }
 
-        // System prompt supporting both Recipe Generation & Firebase queries
+        // System prompt supporting both recipe generation and sample data queries
         const systemPrompt = `You are Grocify AI, an expert AI grocery & culinary assistant for the Grocify grocery comparison platform.
 
 Your task is to understand user requests and respond in JSON with one of three formats:
@@ -190,7 +190,7 @@ Always output valid JSON.`;
                 });
             }
 
-            // Handle Firebase product query
+            // Handle sample data product query
             if (parsed.type === 'query' && parsed.query) {
                 return NextResponse.json({
                     type: 'query',

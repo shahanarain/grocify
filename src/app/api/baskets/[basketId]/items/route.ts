@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
-import { db, FieldValue } from '@/lib/firebase-admin';
+import { db, FieldValue } from '@/lib/demo-database';
 
 // POST /api/baskets/[basketId]/items - add a catalog product to the basket. Body: { canonicalId }.
 export async function POST(

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     let usedMock = false;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const admin = await import('@/lib/firebase-admin') as any;
+      const admin = await import('@/lib/demo-database') as any;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let query: any = admin.db.collection('catalogProducts');
       if (category && category !== 'all') {

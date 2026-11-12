@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
-import { db } from '@/lib/firebase-admin';
+import { db } from '@/lib/demo-database';
 
 interface WhereCondition {
     field: string;
@@ -43,7 +43,7 @@ const VALID_OPERATORS = new Set(['==', '!=', '<', '<=', '>', '>=', 'in', 'not-in
 const MAX_LIMIT = 50;
 const DEFAULT_LIMIT = 20;
 
-// POST /api/chatbot/execute - Execute a restricted Firebase query
+// POST /api/chatbot/execute - Execute a restricted demo database query
 export async function POST(request: NextRequest) {
     try {
         const authResult = await verifyToken(request);

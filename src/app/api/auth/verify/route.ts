@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
-import { db } from '@/lib/firebase-admin';
+import { db } from '@/lib/demo-database';
 
 // POST /api/auth/verify - Verify token and get user profile
 export async function POST(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: authResult.error }, { status: authResult.status });
         }
 
-        // Get user profile from Firestore
+        // Get the shared demo profile
         const userDoc = await db.collection('users').doc(authResult.user!.uid).get();
 
         if (!userDoc.exists) {

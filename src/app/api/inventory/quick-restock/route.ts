@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
-import { db, FieldValue } from '@/lib/firebase-admin';
+import { db, FieldValue } from '@/lib/demo-database';
 import { matchIngredientsToCatalog } from '@/lib/recipe-matcher';
 
 // POST /api/inventory/quick-restock - Automatically compile low-stock pantry items into a Smart Basket

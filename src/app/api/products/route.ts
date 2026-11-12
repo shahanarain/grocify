@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     // ── Try Firestore ─────────────────────────────────────────────────────────
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const admin = await import('@/lib/firebase-admin') as any;
+      const admin = await import('@/lib/demo-database') as any;
       const db = admin.db;
 
       if (search && search.length >= 2) {

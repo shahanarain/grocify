@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
-import { db } from '@/lib/firebase-admin';
+import { db } from '@/lib/demo-database';
 
 // GET /api/stores - Get all stores
 export async function GET(request: NextRequest) {

@@ -110,7 +110,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
 
       setMessages(prev => [...prev, botMessage]);
 
-      // If there's a Firebase query, execute it
+      // If there's a structured data query, execute it.
       if (data.type === 'query' && data.query) {
         await executeQuery(data.query, data.collection);
       }

@@ -1,4 +1,4 @@
-import { db } from './firebase-admin';
+import { db } from './demo-database';
 import { CatalogProduct } from './catalog-types';
 
 export interface MatchedProductSummary {
