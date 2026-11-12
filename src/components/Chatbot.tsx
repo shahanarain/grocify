@@ -352,7 +352,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
               />
               <button
                 type="button"
-                onClick={sendMessage}
+                onClick={() => sendMessage()}
                 disabled={!inputMessage.trim() || isLoading}
                 className="btn-primary p-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow transition"
                 aria-label="Send message"
