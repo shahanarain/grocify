@@ -17,8 +17,19 @@ export async function verifyToken(request: NextRequest): Promise<{ user?: AuthUs
 
         const token = authHeader.split(' ')[1];
 
-        // Demo tokens are only for local development; never accept them in production.
-        if (process.env.NODE_ENV !== 'production' && (token === 'demo-token-grocify-user-123' || token.startsWith('demo-'))) {
+        const hasFirebaseAdminCredentials = Boolean(
+            process.env.FIREBASE_PROJECT_ID &&
+            process.env.FIREBASE_PROJECT_ID !== 'your-project-id' &&
+            process.env.FIREBASE_PRIVATE_KEY &&
+            !process.env.FIREBASE_PRIVATE_KEY.includes('YOUR_PRIVATE_KEY_HERE') &&
+            process.env.FIREBASE_CLIENT_EMAIL
+        );
+        const demoModeEnabled = process.env.NODE_ENV !== 'production' ||
+            (process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && !hasFirebaseAdminCredentials);
+
+        // In production, accept only the fixed demo token and only when the
+        // deployment explicitly enables sample-data demo mode without Firebase.
+        if (demoModeEnabled && token === 'demo-token-grocify-user-123') {
             return {
                 user: {
                     uid: 'demo-user-1',

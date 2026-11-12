@@ -83,13 +83,13 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {process.env.NODE_ENV !== 'production' && (
+        {(process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true') && (
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center shadow-sm">
             <div className="text-xs uppercase tracking-wider font-bold text-emerald-800">
               ⚡ Instant 1-Click Access
             </div>
             <p className="text-xs text-emerald-700 mt-1 mb-3">
-              Explore the demo app without needing Firebase credentials:
+              Explore Grocify with sample grocery data. No account setup is required:
             </p>
             <button
               type="button"

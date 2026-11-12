@@ -14,7 +14,8 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
-const demoLoginEnabled = process.env.NODE_ENV !== 'production';
+const demoLoginEnabled =
+  process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
 const getAuthErrorMessage = (error: unknown): string => {
   if (!(error instanceof Error)) return String(error);
