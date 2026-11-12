@@ -14,6 +14,14 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
+const demoLoginEnabled = process.env.NODE_ENV !== 'production';
+
+const getAuthErrorMessage = (error: unknown): string => {
+  if (!(error instanceof Error)) return String(error);
+  const code = 'code' in error ? String(error.code) : undefined;
+  return code ? `${code}: ${error.message}` : error.message;
+};
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
@@ -31,13 +39,13 @@ const createDemoUser = (name = 'Demo User', email = 'demo@grocify.com'): User =>
     displayName: name,
     emailVerified: true,
     isAnonymous: false,
-    metadata: {} as any,
+    metadata: {} as User['metadata'],
     providerData: [],
     refreshToken: '',
     tenantId: null,
     delete: async () => {},
     getIdToken: async () => 'demo-token-grocify-user-123',
-    getIdTokenResult: async () => ({} as any),
+    getIdTokenResult: async () => ({} as Awaited<ReturnType<User['getIdTokenResult']>>),
     reload: async () => {},
     toJSON: () => ({}),
     phoneNumber: null,
@@ -63,11 +71,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Check if user was previously logged in as demo
     if (typeof window !== 'undefined' && localStorage.getItem('grocify-demo-user') === 'true') {
-      const savedName = localStorage.getItem('grocify-demo-name') || 'Demo User';
-      const savedEmail = localStorage.getItem('grocify-demo-email') || 'demo@grocify.com';
-      setUser(createDemoUser(savedName, savedEmail));
-      setLoading(false);
-      return;
+      if (demoLoginEnabled) {
+        const savedName = localStorage.getItem('grocify-demo-name') || 'Demo User';
+        const savedEmail = localStorage.getItem('grocify-demo-email') || 'demo@grocify.com';
+        setUser(createDemoUser(savedName, savedEmail));
+        setLoading(false);
+        return;
+      }
+
+      // Clear stale local demo sessions so production uses real Firebase auth.
+      localStorage.removeItem('grocify-demo-user');
+      localStorage.removeItem('grocify-demo-name');
+      localStorage.removeItem('grocify-demo-email');
     }
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -79,6 +94,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const loginAsDemo = async (name = 'Demo User', email = 'demo@grocify.com') => {
+    if (!demoLoginEnabled) {
+      throw new Error('Demo login is only available in development. Configure Firebase to sign in.');
+    }
+
     const demoUser = createDemoUser(name, email);
     if (typeof window !== 'undefined') {
       localStorage.setItem('grocify-demo-user', 'true');
@@ -114,26 +133,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create user profile');
       }
-    } catch (error: any) {
-      console.warn('Firebase signup failed, falling back to local demo login:', error?.code || error?.message);
+    } catch (error: unknown) {
+      console.warn('Firebase signup failed:', getAuthErrorMessage(error));
       // If Firebase project credentials are not configured, allow seamless local demo login!
-      await loginAsDemo(name, email);
+      if (demoLoginEnabled) {
+        await loginAsDemo(name, email);
+      } else {
+        throw error;
+      }
     }
   };
 
   const login = async (email: string, password: string) => {
     // If standard demo credentials are used, log in directly as demo
-    if (email === 'demo@grocify.com') {
+    if (demoLoginEnabled && email === 'demo@grocify.com') {
       await loginAsDemo('Demo User', 'demo@grocify.com');
       return;
     }
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (error: any) {
-      console.warn('Firebase login failed, falling back to local demo login:', error?.code || error?.message);
+    } catch (error: unknown) {
+      console.warn('Firebase login failed:', getAuthErrorMessage(error));
       // Graceful development fallback
-      await loginAsDemo('Demo User', email);
+      if (demoLoginEnabled) {
+        await loginAsDemo('Demo User', email);
+      } else {
+        throw error;
+      }
     }
   };
 
@@ -156,9 +183,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to complete Google sign-in');
       }
-    } catch (error: any) {
-      console.warn('Google sign-in failed, falling back to demo user:', error?.code || error?.message);
-      await loginAsDemo('Google Demo User', 'user@gmail.com');
+    } catch (error: unknown) {
+      console.warn('Google sign-in failed:', getAuthErrorMessage(error));
+      if (demoLoginEnabled) {
+        await loginAsDemo('Google Demo User', 'user@gmail.com');
+      } else {
+        throw error;
+      }
     }
   };
 

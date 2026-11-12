@@ -83,26 +83,27 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Quick Demo Login Card */}
-        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center shadow-sm">
-          <div className="text-xs uppercase tracking-wider font-bold text-emerald-800">
-            ⚡ Instant 1-Click Access
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center shadow-sm">
+            <div className="text-xs uppercase tracking-wider font-bold text-emerald-800">
+              ⚡ Instant 1-Click Access
+            </div>
+            <p className="text-xs text-emerald-700 mt-1 mb-3">
+              Explore the demo app without needing Firebase credentials:
+            </p>
+            <button
+              type="button"
+              onClick={handleDemoLogin}
+              disabled={loading}
+              className="w-full btn-primary text-xs font-bold py-2.5 px-4 rounded-xl shadow transition"
+            >
+              {loading ? 'Logging in...' : 'Sign in as Demo User (1-Click)'}
+            </button>
+            <div className="text-[11px] text-gray-500 mt-2.5">
+              Email: <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200">demo@grocify.com</code> | Password: <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200">Password123!</code>
+            </div>
           </div>
-          <p className="text-xs text-emerald-700 mt-1 mb-3">
-            Explore all AI features instantly without needing Firebase credentials:
-          </p>
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            className="w-full btn-primary text-xs font-bold py-2.5 px-4 rounded-xl shadow transition"
-          >
-            {loading ? 'Logging in...' : 'Sign in as Demo User (1-Click)'}
-          </button>
-          <div className="text-[11px] text-gray-500 mt-2.5">
-            Email: <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200">demo@grocify.com</code> | Password: <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200">Password123!</code>
-          </div>
-        </div>
+        )}
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
