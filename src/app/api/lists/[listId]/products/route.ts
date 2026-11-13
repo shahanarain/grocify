@@ -73,7 +73,7 @@ export async function GET(
 
         // Fetch actual product data from main products collection
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const productIds = productRefsSnapshot.docs.map((doc: any) => doc.id);
+        const productIds: string[] = productRefsSnapshot.docs.map((doc: any) => doc.id);
         const productsPromises = productIds.map(async (productId) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const listRefDoc = productRefsSnapshot.docs.find((doc: any) => doc.id === productId);

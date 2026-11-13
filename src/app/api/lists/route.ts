@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
 
                 // Fetch actual product data to get prices
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const productIds = productsSnapshot.docs.map((doc: any) => doc.id);
+                const productIds: string[] = productsSnapshot.docs.map((doc: any) => doc.id);
                 const productsPromises = productIds.map(async (productId) => {
                     return getListProduct(productId);
                 });

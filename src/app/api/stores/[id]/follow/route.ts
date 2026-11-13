@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
 import { db, FieldValue } from '@/lib/demo-database';
+import { MockTransaction } from '@/lib/mock-firestore';
 
 // POST /api/stores/[id]/follow - Follow/Unfollow a store
 export async function POST(
@@ -31,7 +32,7 @@ export async function POST(
         // Run the read + counter update in a transaction so the followers count
         // can't drift: following twice (or unfollowing when not following) must
         // be a no-op for the counter rather than double-counting / going negative.
-        const followers = await db.runTransaction(async (tx) => {
+        const followers = await db.runTransaction(async (tx: MockTransaction) => {
             const storeDoc = await tx.get(storeRef);
             if (!storeDoc.exists) {
                 return null;
