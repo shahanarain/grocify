@@ -3,11 +3,12 @@
 // Every product features verified Pakistani market pricing, multi-store comparison offers,
 // and curated authentic grocery photography.
 import { CatalogProduct } from './catalog-types';
+import { EXTRA_CATALOG } from './mock-catalog-extra';
 
 const img = (id: string) =>
   `https://images.unsplash.com/photo-${id}?w=400&h=400&fit=crop&auto=format&q=80`;
 
-export const MOCK_CATALOG: CatalogProduct[] = [
+const BASE_CATALOG: CatalogProduct[] = [
   // ─────────────────────────────────────────────────────────────────────────────
   // 1. TEA, CHAI & HOT BEVERAGES
   // ─────────────────────────────────────────────────────────────────────────────
@@ -992,4 +993,11 @@ export const MOCK_CATALOG: CatalogProduct[] = [
       { store: 'Metro', name: 'Fresh Beef Boneless 1kg', price: 1250, url: 'https://www.metro-online.pk' },
     ],
   },
+];
+
+// Merge base + extra catalog — deduplicated by canonicalId
+const allIds = new Set(BASE_CATALOG.map((p) => p.canonicalId));
+export const MOCK_CATALOG: CatalogProduct[] = [
+  ...BASE_CATALOG,
+  ...EXTRA_CATALOG.filter((p) => !allIds.has(p.canonicalId)),
 ];

@@ -96,23 +96,39 @@ export async function GET(request: NextRequest) {
 
     // 3. Category & SubCategory filter with multi-level fallback
     if (rawSubCategory) {
-      // First try matching normalized subcategories
+      // Level 1: exact normalized subcategory match
       let subMatches = items.filter((p) =>
         norm.subCategories.some(
           (sc) => sc.toLowerCase() === (p.subCategory || '').toLowerCase()
         )
       );
 
-      // If no subcategory match, try matching subcategory keywords against product name or brand
+      // Level 2: also filter by category if we have category hints
+      if (subMatches.length > 0 && norm.categories.length > 0) {
+        const narrowed = subMatches.filter((p) =>
+          norm.categories.some((c) => c.toLowerCase() === (p.category || '').toLowerCase())
+        );
+        if (narrowed.length > 0) subMatches = narrowed;
+      }
+
+      // Level 3: keyword match on product name, brand, subCategory
       if (subMatches.length === 0 && norm.keywords.length > 0) {
         subMatches = items.filter((p) => {
           const name = (p.name || '').toLowerCase();
+          const brand = (p.brand || '').toLowerCase();
           const sub = (p.subCategory || '').toLowerCase();
-          return norm.keywords.some((kw) => name.includes(kw) || sub.includes(kw));
+          return norm.keywords.some((kw) => name.includes(kw) || brand.includes(kw) || sub.includes(kw));
         });
+        // Try to restrict by category too
+        if (subMatches.length > 0 && norm.categories.length > 0) {
+          const narrowed = subMatches.filter((p) =>
+            norm.categories.some((c) => c.toLowerCase() === (p.category || '').toLowerCase())
+          );
+          if (narrowed.length > 0) subMatches = narrowed;
+        }
       }
 
-      // If still no direct match, check if any products match the category
+      // Level 4: category-only fallback
       if (subMatches.length === 0 && norm.categories.length > 0) {
         subMatches = items.filter((p) =>
           norm.categories.some(
@@ -121,7 +137,17 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      // If we found targeted matches, use them; otherwise keep items to avoid empty dead-end
+      // Level 5: raw subcategory keyword in name fallback
+      if (subMatches.length === 0 && rawSubCategory) {
+        const rawWords = rawSubCategory.toLowerCase().split(/[\s,&\/]+/).filter(w => w.length >= 3);
+        subMatches = items.filter((p) => {
+          const name = (p.name || '').toLowerCase();
+          const sub = (p.subCategory || '').toLowerCase();
+          return rawWords.some((w) => name.includes(w) || sub.includes(w));
+        });
+      }
+
+      // Use matches if found; otherwise show all (avoid empty dead-end)
       if (subMatches.length > 0) {
         items = subMatches;
       }
