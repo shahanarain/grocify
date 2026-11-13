@@ -905,3 +905,4 @@ export const EXTRA_CATALOG: CatalogProduct[] = [
     ],
   },
 ];
+
