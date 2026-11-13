@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/Layout';
-import { AddToList } from '@/components/AddToList';
-import Image from 'next/image';
+import { ProductCard } from '@/components/ProductCard';
+import { formatCategoryName } from '@/lib/category-name';
 
 interface Product {
   id: string;
@@ -284,7 +284,7 @@ export default function HomePage() {
                 )}
                 {selectedCategory !== 'all' && (
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    Category: {selectedCategory}
+                    Category: {formatCategoryName(selectedCategory)}
                     <button
                       onClick={() => handleCategoryChange('all')}
                       className="ml-2 text-blue-600 hover:text-blue-800"
@@ -324,69 +324,9 @@ export default function HomePage() {
           ) : (
             <>
               {/* Products Grid */}
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
                 {products.map((product) => (
-                  <div
-                    key={product.id}
-                    className="bg-surface overflow-hidden shadow-sm border border-gray-100 rounded-2xl card-lift"
-                  >
-                    <div className="relative h-40 bg-white">
-                      <Image
-                        src={product.imageUrl}
-                        alt={product.name}
-                        fill
-                        className="object-contain p-2"
-                      />
-                      {product.discount > 0 && (
-                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                          -{product.discount}%
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3">
-                      <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2 h-10">
-                        {product.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 mb-2">{product.quantity}</p>
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-lg font-bold text-green-600">
-                          Rs. {product.newPrice}
-                        </span>
-                        {product.oldPrice > 0 && (
-                          <span className="text-sm text-gray-400 line-through">
-                            Rs. {product.oldPrice}
-                          </span>
-                        )}
-                      </div>
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
-                          {product.category}
-                        </span>
-                        <span className="text-xs text-gray-500">{product.supplier}</span>
-                      </div>
-                      {product.url && (
-                        <div className="mt-3">
-                          <a
-                            href={product.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full btn-primary text-xs font-medium py-2 px-3 rounded-lg flex items-center justify-center mb-2"
-                          >
-                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            Visit Site
-                          </a>
-                          <AddToList product={product} />
-                        </div>
-                      )}
-                      {!product.url && (
-                        <div className="mt-3">
-                          <AddToList product={product} />
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <ProductCard key={product.id} product={product} showCategory />
                 ))}
               </div>
 

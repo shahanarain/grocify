@@ -1,89 +1,55 @@
 'use client';
 
+import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/Layout';
-import Link from 'next/link';
 import { CATEGORY_HIERARCHY } from '@/lib/category-hierarchy';
-
-// Full category hierarchy
-
-
-// Colors for category cards
-const CATEGORY_COLORS = [
-    'from-orange-400 to-orange-600',
-    'from-blue-400 to-blue-600',
-    'from-yellow-400 to-yellow-600',
-    'from-pink-400 to-pink-600',
-    'from-cyan-400 to-cyan-600',
-    'from-purple-400 to-purple-600',
-    'from-teal-400 to-teal-600',
-    'from-amber-400 to-amber-600',
-    'from-red-400 to-red-600',
-    'from-indigo-400 to-indigo-600',
-    'from-lime-400 to-lime-600',
-    'from-rose-400 to-rose-600',
-    'from-emerald-400 to-emerald-600',
-    'from-violet-400 to-violet-600',
-    'from-fuchsia-400 to-fuchsia-600',
-    'from-sky-400 to-sky-600',
-];
+import { encodeCategorySlug, formatCategoryName } from '@/lib/category-name';
 
 export default function CategoriesPage() {
     return (
         <ProtectedRoute>
             <AppLayout>
-                <div>
-                    <div className="mb-6">
-                        <h1 className="text-2xl font-bold text-gray-900">Categories</h1>
-                        <p className="mt-1 text-sm text-gray-500">
-                            Browse products by category
+                <main className="mx-auto w-full max-w-7xl pb-10">
+                    <header className="mb-8 border-b border-gray-200 pb-6">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-green-700">Grocify catalogue</p>
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Shop by category</h1>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base">
+                            Browse everyday essentials by aisle and find the products you need.
                         </p>
-                    </div>
+                    </header>
 
-                    {/* Categories List */}
-                    <div className="space-y-8">
-                        {CATEGORY_HIERARCHY.map((category, categoryIndex) => (
-                            <div key={category.name} className="bg-surface rounded-lg shadow-sm overflow-hidden">
-                                {/* Category Header */}
-                                <div className={`bg-gradient-to-r ${CATEGORY_COLORS[categoryIndex % CATEGORY_COLORS.length]} px-6 py-4`}>
-                                    <h2 className="text-xl font-bold text-white flex items-center">
-                                        <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                                        </svg>
-                                        {category.name}
+                    <div className="space-y-5 sm:space-y-6">
+                        {CATEGORY_HIERARCHY.map((category) => (
+                            <section key={category.name} className="overflow-hidden rounded-2xl border border-gray-200 bg-surface shadow-sm">
+                                <header className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 px-4 py-4 sm:px-6">
+                                    <h2 className="text-lg font-semibold tracking-tight text-gray-900 sm:text-xl">
+                                        {formatCategoryName(category.name)}
                                     </h2>
-                                    <p className="text-white text-opacity-80 text-sm mt-1">
-                                        {category.subCategories.length} subcategories
-                                    </p>
-                                </div>
+                                    <span className="text-xs font-medium text-gray-500 sm:text-sm">
+                                        {category.subCategories.length} {category.subCategories.length === 1 ? 'subcategory' : 'subcategories'}
+                                    </span>
+                                </header>
 
-                                {/* Subcategories Grid */}
-                                <div className="p-4">
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                        {category.subCategories.map((subCategory) => (
+                                <ul className="grid grid-cols-1 gap-2 p-3 sm:grid-cols-2 sm:gap-3 sm:p-5 lg:grid-cols-3">
+                                    {category.subCategories.map((subCategory) => (
+                                        <li key={subCategory}>
                                             <Link
-                                                key={subCategory}
-                                                href={`/categories/${encodeURIComponent(category.name)}/${encodeURIComponent(subCategory)}`}
-                                                className="group block p-4 bg-gray-50 hover:bg-green-50 rounded-lg border border-gray-200 hover:border-green-300 transition-all duration-200"
+                                                href={`/categories/${encodeCategorySlug(category.name)}/${encodeCategorySlug(subCategory)}`}
+                                                className="group flex min-h-12 items-center justify-between gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-green-50 hover:text-green-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600"
                                             >
-                                                <div className="flex items-center">
-                                                    <div className="flex-shrink-0 w-8 h-8 bg-green-100 group-hover:bg-green-200 rounded-lg flex items-center justify-center transition-colors">
-                                                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                        </svg>
-                                                    </div>
-                                                    <span className="ml-3 text-sm font-medium text-gray-700 group-hover:text-green-700 line-clamp-2">
-                                                        {subCategory}
-                                                    </span>
-                                                </div>
+                                                <span className="min-w-0 break-words">{formatCategoryName(subCategory)}</span>
+                                                <svg className="h-4 w-4 shrink-0 text-gray-400 transition-transform group-hover:translate-x-0.5 group-hover:text-green-700" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                                    <path d="m9 18 6-6-6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
                                             </Link>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
                         ))}
                     </div>
-                </div>
+                </main>
             </AppLayout>
         </ProtectedRoute>
     );

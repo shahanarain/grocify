@@ -7,6 +7,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/Layout';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import Image from 'next/image';
+import { formatCategoryName } from '@/lib/category-name';
 
 interface List {
   id: string;
@@ -272,7 +273,7 @@ export default function ListDetailPage() {
                     </div>
                     <div className="mt-2 flex items-center justify-between">
                       <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
-                        {product.category}
+                        {formatCategoryName(product.category)}
                       </span>
                       <span className="text-xs text-gray-500">{product.supplier}</span>
                     </div>

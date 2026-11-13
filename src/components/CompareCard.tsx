@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { CatalogProduct } from '@/lib/catalog-types';
+import { formatCategoryName } from '@/lib/category-name';
 
 const CATEGORY_EMOJI: Record<string, string> = {
   'Dairy': '🥛',
@@ -42,7 +43,7 @@ export const CompareCard: React.FC<CompareCardProps> = ({ product, action }) => 
         ) : (
           <div className="flex flex-col items-center justify-center h-full gap-1">
             <span className="text-4xl">{categoryEmoji(product.category)}</span>
-            <span className="text-[10px] text-gray-400">{product.subCategory}</span>
+            <span className="text-[10px] text-gray-400">{formatCategoryName(product.subCategory)}</span>
           </div>
         )}
         {product.savingPct > 0 && (

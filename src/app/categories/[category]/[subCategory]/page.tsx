@@ -1,28 +1,16 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/Layout';
-import { AddToList } from '@/components/AddToList';
-import Image from 'next/image';
-import Link from 'next/link';
+import { ProductCard, ProductCardData } from '@/components/ProductCard';
+import { useAuth } from '@/contexts/AuthContext';
+import { formatCategoryName } from '@/lib/category-name';
 
-interface Product {
-    id: string;
-    name: string;
-    imageUrl: string;
-    newPrice: number;
-    oldPrice: number;
-    quantity: string;
-    category: string;
-    subCategory: string;
-    discount: number;
-    supplier: string;
+interface Product extends ProductCardData {
     createdAt: Date | { toDate: () => Date };
-    url: string;
-    offers?: { store: string; name: string; price: number; url: string }[];
 }
 
 interface PaginationInfo {
@@ -32,12 +20,26 @@ interface PaginationInfo {
     lastDocId: string | null;
 }
 
+function ProductCardSkeleton() {
+    return (
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-surface">
+            <div className="aspect-square animate-pulse bg-gray-100" />
+            <div className="space-y-3 p-4">
+                <div className="h-3 w-1/3 animate-pulse rounded bg-gray-100" />
+                <div className="h-4 w-5/6 animate-pulse rounded bg-gray-100" />
+                <div className="h-5 w-1/2 animate-pulse rounded bg-gray-100" />
+                <div className="h-10 animate-pulse rounded-xl bg-gray-100" />
+            </div>
+        </div>
+    );
+}
+
 export default function SubCategoryProductsPage() {
-    const params = useParams();
+    const params = useParams<{ category: string; subCategory: string }>();
     const router = useRouter();
-    // Next.js has already decoded dynamic route params.
-    const category = params.category as string;
-    const subCategory = params.subCategory as string;
+    // Decode a residual encoded segment once for both display and API filtering.
+    const category = formatCategoryName(params.category);
+    const subCategory = formatCategoryName(params.subCategory);
 
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -47,7 +49,7 @@ export default function SubCategoryProductsPage() {
         limit: 20,
         total: 0,
         hasMore: false,
-        lastDocId: null
+        lastDocId: null,
     });
 
     const { user } = useAuth();
@@ -57,48 +59,35 @@ export default function SubCategoryProductsPage() {
 
         try {
             setError('');
-            if (isLoadMore) {
-                setLoadingMore(true);
-            } else {
-                setLoading(true);
-            }
+            if (isLoadMore) setLoadingMore(true);
+            else setLoading(true);
 
             const token = await user.getIdToken();
             const queryParams = new URLSearchParams({
                 limit: pagination.limit.toString(),
-                category: category,
-                subCategory: subCategory,
+                category,
+                subCategory,
             });
 
             if (isLoadMore && pagination.lastDocId) {
-                queryParams.append('lastDocId', pagination.lastDocId);
+                queryParams.set('lastDocId', pagination.lastDocId);
             }
 
             const response = await fetch(`/api/products?${queryParams}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch products');
-            }
+            if (!response.ok) throw new Error('Could not load products. Please try again.');
 
             const data = await response.json();
             if (!Array.isArray(data.products) || !data.pagination) {
-                throw new Error('The product response was invalid');
+                throw new Error('The product response was invalid. Please try again.');
             }
 
-            if (isLoadMore) {
-                setProducts(prev => [...prev, ...data.products]);
-            } else {
-                setProducts(data.products);
-            }
-
+            setProducts((current) => isLoadMore ? [...current, ...data.products] : data.products);
             setPagination(data.pagination);
         } catch (err: unknown) {
-            const errorMessage = err instanceof Error ? err.message : 'Failed to load products';
-            setError(errorMessage);
+            setError(err instanceof Error ? err.message : 'Could not load products. Please try again.');
         } finally {
             setLoading(false);
             setLoadingMore(false);
@@ -107,203 +96,120 @@ export default function SubCategoryProductsPage() {
 
     useEffect(() => {
         fetchProducts();
+        // A new category route should always start from its first page.
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, category, subCategory]);
 
-    const handleLoadMore = () => {
-        if (!loadingMore && pagination.hasMore) {
-            fetchProducts(true);
-        }
-    };
+    const description = `Browse ${subCategory} in ${category} and compare available products and prices.`;
 
     return (
         <ProtectedRoute>
             <AppLayout>
-                <div>
-                    {/* Breadcrumb */}
-                    <nav className="mb-4">
-                        <ol className="flex items-center space-x-2 text-sm">
-                            <li>
-                                <Link href="/categories" className="text-green-600 hover:text-green-700">
+                <main className="mx-auto w-full max-w-7xl pb-10">
+                    <nav aria-label="Breadcrumb" className="mb-6">
+                        <ol className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+                            <li className="shrink-0">
+                                <Link href="/categories" className="font-medium text-green-700 transition-colors hover:text-green-800 hover:underline">
                                     Categories
                                 </Link>
                             </li>
-                            <li className="text-gray-400">/</li>
-                            <li>
-                                <span className="text-gray-600">{category}</span>
+                            <li aria-hidden="true" className="text-gray-300">/</li>
+                            <li className="min-w-0 max-w-[42vw] truncate text-gray-500 sm:max-w-none">
+                                <span title={category}>{category}</span>
                             </li>
-                            <li className="text-gray-400">/</li>
-                            <li>
-                                <span className="text-gray-900 font-medium">{subCategory}</span>
+                            <li aria-hidden="true" className="text-gray-300">/</li>
+                            <li aria-current="page" className="min-w-0 max-w-[42vw] truncate font-medium text-gray-900 sm:max-w-none">
+                                <span title={subCategory}>{subCategory}</span>
                             </li>
                         </ol>
                     </nav>
 
-                    {/* Header */}
-                    <div className="mb-6 flex items-center justify-between">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900">{subCategory}</h1>
-                            <p className="mt-1 text-sm text-gray-500">
-                                {category} • {products.length} products
+                    <header className="mb-7 flex flex-col gap-5 border-b border-gray-200 pb-6 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+                        <div className="min-w-0">
+                            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-green-700">
+                                {category}
+                            </p>
+                            <h1 className="break-words text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                                {subCategory}
+                            </h1>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600 sm:text-base">
+                                {description}
                             </p>
                         </div>
-                        <button
-                            onClick={() => router.back()}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 flex items-center"
-                        >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back
-                        </button>
-                    </div>
+
+                        <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
+                            <p className="text-sm text-gray-500" aria-live="polite">
+                                {loading ? 'Loading products…' : (
+                                    <><span className="font-semibold text-gray-900">{pagination.total}</span> {pagination.total === 1 ? 'product' : 'products'}</>
+                                )}
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => router.back()}
+                                className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-gray-200 bg-surface px-3.5 text-sm font-medium text-gray-700 transition-colors hover:border-gray-300 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
+                            >
+                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M19 12H5m0 0 7 7m-7-7 7-7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                Back
+                            </button>
+                        </div>
+                    </header>
 
                     {loading ? (
-                        <div className="flex items-center justify-center h-64">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
+                            {Array.from({ length: 10 }, (_, index) => <ProductCardSkeleton key={index} />)}
                         </div>
                     ) : error ? (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-                            {error}
-                        </div>
+                        <section role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-center">
+                            <h2 className="text-base font-semibold text-rose-900">We couldn’t load these products</h2>
+                            <p className="mt-1 text-sm text-rose-700">{error}</p>
+                            <button
+                                type="button"
+                                onClick={() => fetchProducts()}
+                                className="mt-4 rounded-xl bg-rose-700 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rose-800"
+                            >
+                                Try again
+                            </button>
+                        </section>
                     ) : products.length === 0 ? (
-                        <div className="text-center py-12">
-                            <svg
-                                className="mx-auto h-12 w-12 text-gray-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                                />
-                            </svg>
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">No products found</h3>
-                            <p className="mt-1 text-sm text-gray-500">
-                                No products available in this subcategory.
-                            </p>
-                            <Link
-                                href="/categories"
-                                className="mt-4 inline-flex items-center text-green-600 hover:text-green-700 font-medium"
-                            >
-                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        <section className="rounded-2xl border border-dashed border-gray-300 bg-surface px-5 py-16 text-center">
+                            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-green-50 text-green-700">
+                                <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    <circle cx="10" cy="20" r="1" fill="currentColor" />
+                                    <circle cx="18" cy="20" r="1" fill="currentColor" />
                                 </svg>
-                                Browse other categories
+                            </div>
+                            <h2 className="mt-4 text-lg font-semibold text-gray-900">No products here yet</h2>
+                            <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-gray-500">
+                                We couldn’t find products in {subCategory}. Explore another category to keep browsing.
+                            </p>
+                            <Link href="/categories" className="mt-5 inline-flex items-center rounded-xl bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-800">
+                                Browse categories
                             </Link>
-                        </div>
+                        </section>
                     ) : (
                         <>
-                            {/* Products Grid */}
-                            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                                {products.map((product) => {
-                                    const productUrl = product.url && product.url !== '#'
-                                        ? product.url
-                                        : product.offers?.find((offer) => offer.store === product.supplier)?.url;
-
-                                    return (
-                                    <div
-                                        key={product.id}
-                                        className="bg-surface overflow-hidden shadow-sm border border-gray-100 rounded-2xl card-lift"
-                                    >
-                                        <div className="relative h-40 bg-gray-50 flex items-center justify-center">
-                                            {product.imageUrl ? (
-                                                <Image
-                                                    src={product.imageUrl}
-                                                    alt={product.name}
-                                                    fill
-                                                    className="object-contain p-2"
-                                                    onError={(e) => {
-                                                        (e.target as HTMLImageElement).style.display = 'none';
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div className="flex flex-col items-center justify-center text-gray-400 text-xs">
-                                                    <span className="text-3xl mb-1">🛒</span>
-                                                    <span>{product.subCategory || 'Grocery'}</span>
-                                                </div>
-                                            )}
-                                            {product.discount > 0 && (
-                                                <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                                                    -{product.discount}%
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="p-3">
-                                            <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2 h-10">
-                                                {product.name}
-                                            </h3>
-                                            <p className="text-xs text-gray-500 mb-2">{product.quantity}</p>
-                                            <div className="flex items-baseline space-x-2">
-                                                <span className="text-lg font-bold text-green-600">
-                                                    Rs. {product.newPrice}
-                                                </span>
-                                                {product.oldPrice > 0 && (
-                                                    <span className="text-sm text-gray-400 line-through">
-                                                        Rs. {product.oldPrice}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <div className="mt-2">
-                                                <span className="text-xs text-gray-500">{product.supplier}</span>
-                                            </div>
-                                            {productUrl && (
-                                                <div className="mt-3">
-                                                    <a
-                                                        href={productUrl}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="w-full btn-primary text-xs font-medium py-2 px-3 rounded-lg flex items-center justify-center mb-2"
-                                                    >
-                                                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                        </svg>
-                                                        Visit Site
-                                                    </a>
-                                                    <AddToList product={product} />
-                                                </div>
-                                            )}
-                                            {!productUrl && (
-                                                <div className="mt-3">
-                                                    <AddToList product={product} />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    );
-                                })}
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
+                                {products.map((product) => <ProductCard key={product.id} product={product} />)}
                             </div>
 
-                            {/* Load More Button */}
                             {pagination.hasMore && (
-                                <div className="mt-8 text-center">
+                                <div className="mt-9 flex justify-center">
                                     <button
-                                        onClick={handleLoadMore}
+                                        type="button"
+                                        onClick={() => fetchProducts(true)}
                                         disabled={loadingMore}
-                                        className="px-6 py-3 btn-primary rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="inline-flex min-h-11 items-center justify-center rounded-xl border border-gray-200 bg-surface px-5 text-sm font-semibold text-gray-700 transition-colors hover:border-green-300 hover:bg-green-50 hover:text-green-800 disabled:cursor-not-allowed disabled:opacity-60"
                                     >
-                                        {loadingMore ? (
-                                            <div className="flex items-center">
-                                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                Loading...
-                                            </div>
-                                        ) : (
-                                            'Load More Products'
-                                        )}
+                                        {loadingMore ? 'Loading more…' : 'Load more products'}
                                     </button>
                                 </div>
                             )}
-
-                            {/* Products Count */}
-                            <div className="mt-6 text-center text-sm text-gray-500">
-                                Showing {products.length} of {pagination.total} products
-                            </div>
                         </>
                     )}
-                </div>
+                </main>
             </AppLayout>
         </ProtectedRoute>
     );

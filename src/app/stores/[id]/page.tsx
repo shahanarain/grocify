@@ -7,6 +7,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/Layout';
 import { AddToList } from '@/components/AddToList';
 import Image from 'next/image';
+import { formatCategoryName } from '@/lib/category-name';
 
 interface Product {
   id: string;
@@ -317,7 +318,7 @@ export default function StoreDetailPage() {
                     </div>
                     <div className="mt-2">
                       <span className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded">
-                        {product.category}
+                        {formatCategoryName(product.category)}
                       </span>
                     </div>
                     {product.url && (

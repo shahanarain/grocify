@@ -8,6 +8,7 @@ import { AppLayout } from '@/components/Layout';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import { ToastContainer } from '@/components/Toast';
+import { formatCategoryName } from '@/lib/category-name';
 
 interface InventoryItem {
   id: string;
@@ -429,7 +430,7 @@ export default function InventoryPage() {
                     {/* Status Badges Header */}
                     <div className="flex items-center justify-between gap-1 mb-2">
                       <span className="text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
-                        {item.category}
+                        {formatCategoryName(item.category)}
                       </span>
                       {isExpired ? (
                         <span className="text-[10px] font-bold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 px-2 py-0.5 rounded-full">
