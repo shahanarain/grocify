@@ -5,15 +5,19 @@ import { matchIngredientsToCatalog, RecipeData } from '@/lib/recipe-matcher';
 import { getFaqAnswer } from '@/lib/chatbot-faq';
 import OpenAI from 'openai';
 
-// Initialize OpenAI client - will be set when first request comes in
-let openai: OpenAI | null = null;
+// The OpenAI client is also compatible with Groq's API. Prefer Groq when its
+// server-side key is configured, while continuing to support OpenAI.
+let chatClient: OpenAI | null = null;
 
-const initializeOpenAI = () => {
-    if (!openai && process.env.OPENAI_API_KEY) {
-        openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
+const initializeChatClient = () => {
+    const groqApiKey = process.env.GROQ_API_KEY;
+    const apiKey = groqApiKey || process.env.OPENAI_API_KEY;
+    if (!chatClient && apiKey) {
+        chatClient = new OpenAI({
+            apiKey,
+            ...(groqApiKey ? { baseURL: 'https://api.groq.com/openai/v1' } : {}),
         });
-        console.log('OpenAI client initialized successfully');
+        console.log(groqApiKey ? 'Groq chatbot client initialized' : 'OpenAI chatbot client initialized');
     }
 };
 
@@ -25,7 +29,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: authResult.error }, { status: authResult.status });
         }
 
-        // Limit OpenAI-backed calls per user: 15 requests per minute.
+        // Limit AI-backed calls per user: 15 requests per minute.
         const limit = rateLimit(`chatbot:${authResult.user!.uid}`, 15, 60_000);
         if (!limit.allowed) {
             return NextResponse.json(
@@ -40,13 +44,13 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Message is required' }, { status: 400 });
         }
 
-        // Cap message length to bound OpenAI token usage / cost per request.
+        // Cap message length to bound token usage / cost per request.
         if (message.length > 500) {
             return NextResponse.json({ error: 'Message is too long (max 500 characters)' }, { status: 400 });
         }
 
-        // Keep common help available even when no OpenAI key is configured.
-        if (!process.env.OPENAI_API_KEY) {
+        // Keep common help available when no AI provider key is configured.
+        if (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY) {
             return NextResponse.json({
                 type: 'message',
                 message: getFaqAnswer(message),
@@ -55,13 +59,12 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        // Initialize OpenAI if not already done
-        initializeOpenAI();
+        // Initialize the selected provider if not already done
+        initializeChatClient();
 
-        // Check if OpenAI is available
-        if (!openai) {
+        if (!chatClient) {
             return NextResponse.json({
-                error: 'Chatbot service is not available. Please configure OpenAI API key.'
+                error: 'Chatbot service is not available. Configure GROQ_API_KEY or OPENAI_API_KEY.'
             }, { status: 503 });
         }
 
@@ -102,7 +105,7 @@ CRITICAL RULES FOR RECIPES:
 - "quantity" MUST be a numeric value (e.g. 500, 2, 0.5) so it can scale with servings.
 - "unit" is the measurement (g, kg, ml, cup, tbsp, tsp, piece, cloves).
 
-2. GROCERY SEARCH & FIRESTORE QUERIES:
+2. GROCERY SEARCH & PRODUCT DATA QUERIES:
 When user asks to search or browse products/stores directly (e.g. "show breakfast products", "find products under 100", "show Diamond store products", "products with discount"):
 Available collections:
 - products: { id, name, imageUrl, newPrice, oldPrice, quantity, category, subCategory, discount, supplier, status, createdAt, url }
@@ -131,9 +134,11 @@ Return JSON:
 
 Always output valid JSON.`;
 
-        // Generate response using OpenAI
-        const completion = await openai.chat.completions.create({
-            model: process.env.OPENAI_MODEL || "gpt-4o-mini",
+        // Generate a response using Groq when configured, otherwise OpenAI.
+        const completion = await chatClient.chat.completions.create({
+            model: process.env.GROQ_API_KEY
+                ? process.env.GROQ_MODEL || 'openai/gpt-oss-20b'
+                : process.env.OPENAI_MODEL || 'gpt-4o-mini',
             messages: [
                 { role: "system", content: systemPrompt },
                 { role: "user", content: message }
