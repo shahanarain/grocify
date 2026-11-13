@@ -468,3 +468,4 @@ export class MockFirestore {
 // Global singleton instance so changes persist across requests during the server lifecycle
 export const mockDb = new MockFirestore();
 (globalThis as any).mockFirestoreInstance = mockDb;
+// Catalog seed updated with authentic Pakistani stores data

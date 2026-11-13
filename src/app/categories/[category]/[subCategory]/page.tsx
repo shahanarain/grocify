@@ -22,6 +22,7 @@ interface Product {
     supplier: string;
     createdAt: Date | { toDate: () => Date };
     url: string;
+    offers?: { store: string; name: string; price: number; url: string }[];
 }
 
 interface PaginationInfo {
@@ -34,8 +35,9 @@ interface PaginationInfo {
 export default function SubCategoryProductsPage() {
     const params = useParams();
     const router = useRouter();
-    const category = decodeURIComponent(params.category as string);
-    const subCategory = decodeURIComponent(params.subCategory as string);
+    // Next.js has already decoded dynamic route params.
+    const category = params.category as string;
+    const subCategory = params.subCategory as string;
 
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -54,6 +56,7 @@ export default function SubCategoryProductsPage() {
         if (!user) return;
 
         try {
+            setError('');
             if (isLoadMore) {
                 setLoadingMore(true);
             } else {
@@ -82,6 +85,9 @@ export default function SubCategoryProductsPage() {
             }
 
             const data = await response.json();
+            if (!Array.isArray(data.products) || !data.pagination) {
+                throw new Error('The product response was invalid');
+            }
 
             if (isLoadMore) {
                 setProducts(prev => [...prev, ...data.products]);
@@ -193,7 +199,12 @@ export default function SubCategoryProductsPage() {
                         <>
                             {/* Products Grid */}
                             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                                {products.map((product) => (
+                                {products.map((product) => {
+                                    const productUrl = product.url && product.url !== '#'
+                                        ? product.url
+                                        : product.offers?.find((offer) => offer.store === product.supplier)?.url;
+
+                                    return (
                                     <div
                                         key={product.id}
                                         className="bg-surface overflow-hidden shadow-sm border border-gray-100 rounded-2xl card-lift"
@@ -239,10 +250,10 @@ export default function SubCategoryProductsPage() {
                                             <div className="mt-2">
                                                 <span className="text-xs text-gray-500">{product.supplier}</span>
                                             </div>
-                                            {product.url && (
+                                            {productUrl && (
                                                 <div className="mt-3">
                                                     <a
-                                                        href={product.url}
+                                                        href={productUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="w-full btn-primary text-xs font-medium py-2 px-3 rounded-lg flex items-center justify-center mb-2"
@@ -255,14 +266,15 @@ export default function SubCategoryProductsPage() {
                                                     <AddToList product={product} />
                                                 </div>
                                             )}
-                                            {!product.url && (
+                                            {!productUrl && (
                                                 <div className="mt-3">
                                                     <AddToList product={product} />
                                                 </div>
                                             )}
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             {/* Load More Button */}
@@ -287,7 +299,7 @@ export default function SubCategoryProductsPage() {
 
                             {/* Products Count */}
                             <div className="mt-6 text-center text-sm text-gray-500">
-                                Showing {products.length} products
+                                Showing {products.length} of {pagination.total} products
                             </div>
                         </>
                     )}
