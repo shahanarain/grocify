@@ -36,7 +36,7 @@ export async function GET(
     // Resolve each canonical item from the catalog (drop any that were deleted).
     const products = (
       await Promise.all(
-        canonicalIds.map(async (cid) => {
+        canonicalIds.map(async (cid: string) => {
           const snap = await db.collection('catalogProducts').doc(cid).get();
           return snap.exists ? ({ canonicalId: snap.id, ...snap.data() } as CatalogProduct) : null;
         })
