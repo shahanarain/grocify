@@ -1,29 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth-middleware';
 import { MOCK_CATALOG } from '@/lib/mock-catalog';
+import { normalizeCategoryParams } from '@/lib/category-normalizer';
 
-// Converts a CatalogProduct to the legacy `products` shape expected by the home page
+// Fallback image helper
+const DEFAULT_IMAGE =
+  'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop&auto=format';
+
+// Converts a CatalogProduct / offer to the Product shape expected by pages
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function catalogToProduct(p: any) {
+  const imgUrl = p.image || p.imageUrl || DEFAULT_IMAGE;
   return {
-    id: p.canonicalId,
-    name: p.title,
-    brand: p.brand,
-    category: p.category,
-    subCategory: p.subCategory,
-    newPrice: p.minPrice,
-    oldPrice: p.maxPrice,
-    image: p.image || null,
+    id: p.canonicalId || p.id,
+    name: p.title || p.name,
+    brand: p.brand || '',
+    category: p.category || '',
+    subCategory: p.subCategory || '',
+    newPrice: typeof p.minPrice === 'number' ? p.minPrice : (p.newPrice || 0),
+    oldPrice: typeof p.maxPrice === 'number' ? p.maxPrice : (p.oldPrice || 0),
+    image: imgUrl,
+    imageUrl: imgUrl,
+    quantity: p.quantity || '1 unit',
     status: 1,
-    supplier: p.cheapestStore,
-    storeCount: p.storeCount,
-    savingPct: p.savingPct,
-    offers: p.offers,
+    supplier: p.cheapestStore || p.supplier || 'Metro',
+    storeCount: p.storeCount || 1,
+    savingPct: p.savingPct || p.discount || 0,
+    discount: p.savingPct || p.discount || 0,
+    offers: p.offers || [],
+    url: p.url || '#',
+    createdAt: p.createdAt || new Date(),
   };
 }
 
-// GET /api/products - Get paginated products with optional search and filters.
-// Tries Firestore first; falls back to MOCK_CATALOG when Admin SDK is not configured.
+// GET /api/products - Get paginated products with smart search and normalized category filters.
 export async function GET(request: NextRequest) {
   try {
     const authResult = await verifyToken(request);
@@ -39,8 +49,8 @@ export async function GET(request: NextRequest) {
 
     const lastDocId = searchParams.get('lastDocId');
     const search = searchParams.get('search')?.trim().toLowerCase();
-    const category = searchParams.get('category');
-    const subCategory = searchParams.get('subCategory');
+    const rawCategory = searchParams.get('category');
+    const rawSubCategory = searchParams.get('subCategory');
     const supplier = searchParams.get('supplier');
 
     const parsePrice = (raw: string | null): number | null => {
@@ -51,78 +61,83 @@ export async function GET(request: NextRequest) {
     const minPrice = parsePrice(searchParams.get('minPrice'));
     const maxPrice = parsePrice(searchParams.get('maxPrice'));
 
-    // ── Try Firestore ─────────────────────────────────────────────────────────
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const admin = await import('@/lib/demo-database') as any;
-      const db = admin.db;
+    // Normalize category and subcategory from the request
+    const norm = normalizeCategoryParams(rawCategory, rawSubCategory);
 
-      if (search && search.length >= 2) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let q: any = db.collection('products').where('status', '==', 1);
-        if (category && category !== 'all') q = q.where('category', '==', category);
-        if (supplier) q = q.where('supplier', '==', supplier);
-        q = q.orderBy('createdAt', 'desc').limit(200);
-        const snap = await q.get();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const products = snap.docs
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((d: any) => ({ id: d.id, ...d.data() }))
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .filter((p: any) => p.name?.toLowerCase().includes(search));
-        return NextResponse.json({
-          products,
-          pagination: { limit, total: products.length, hasMore: false, lastDocId: null },
-          isSearchResult: true,
-        });
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query: any = db.collection('products').where('status', '==', 1);
-      if (category && category !== 'all') query = query.where('category', '==', category);
-      if (subCategory) query = query.where('subCategory', '==', subCategory);
-      if (supplier) query = query.where('supplier', '==', supplier);
-      if (minPrice !== null) query = query.where('newPrice', '>=', minPrice);
-      if (maxPrice !== null) query = query.where('newPrice', '<=', maxPrice);
-      query = query.orderBy('createdAt', 'desc').limit(limit);
-
-      if (lastDocId) {
-        const lastDoc = await db.collection('products').doc(lastDocId).get();
-        if (lastDoc.exists) query = query.startAfter(lastDoc);
-      }
-
-      const snapshot = await query.get();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const products = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
-
-      if (products.length > 0) {
-        return NextResponse.json({
-          products,
-          pagination: {
-            limit,
-            total: 11457,
-            hasMore: snapshot.docs.length === limit,
-            lastDocId: snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1].id : null,
-          },
-        });
-      }
-      // Fall through to mock if Firestore returned 0 results
-    } catch {
-      // Firestore not configured — use mock data below
-    }
-
-    // ── Mock data fallback ────────────────────────────────────────────────────
+    // Build the candidate product list from the catalog
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let items: any[] = MOCK_CATALOG.map(catalogToProduct);
 
-    if (search && search.length >= 2) {
-      items = items.filter(
-        (p) => p.name?.toLowerCase().includes(search) || p.brand?.toLowerCase().includes(search)
-      );
+    // 1. Supplier filter
+    if (supplier) {
+      items = items.filter((p) => p.supplier?.toLowerCase() === supplier.toLowerCase());
     }
-    if (category && category !== 'all') items = items.filter((p) => p.category === category);
-    if (subCategory) items = items.filter((p) => p.subCategory === subCategory);
-    if (supplier) items = items.filter((p) => p.supplier === supplier);
+
+    // 2. Search query filter
+    if (search && search.length >= 2) {
+      items = items.filter((p) => {
+        const name = (p.name || '').toLowerCase();
+        const brand = (p.brand || '').toLowerCase();
+        const cat = (p.category || '').toLowerCase();
+        const sub = (p.subCategory || '').toLowerCase();
+        return (
+          name.includes(search) ||
+          brand.includes(search) ||
+          cat.includes(search) ||
+          sub.includes(search)
+        );
+      });
+      return NextResponse.json({
+        products: items.slice(0, limit),
+        pagination: { limit, total: items.length, hasMore: false, lastDocId: null },
+        isSearchResult: true,
+      });
+    }
+
+    // 3. Category & SubCategory filter with multi-level fallback
+    if (rawSubCategory) {
+      // First try matching normalized subcategories
+      let subMatches = items.filter((p) =>
+        norm.subCategories.some(
+          (sc) => sc.toLowerCase() === (p.subCategory || '').toLowerCase()
+        )
+      );
+
+      // If no subcategory match, try matching subcategory keywords against product name or brand
+      if (subMatches.length === 0 && norm.keywords.length > 0) {
+        subMatches = items.filter((p) => {
+          const name = (p.name || '').toLowerCase();
+          const sub = (p.subCategory || '').toLowerCase();
+          return norm.keywords.some((kw) => name.includes(kw) || sub.includes(kw));
+        });
+      }
+
+      // If still no direct match, check if any products match the category
+      if (subMatches.length === 0 && norm.categories.length > 0) {
+        subMatches = items.filter((p) =>
+          norm.categories.some(
+            (c) => c.toLowerCase() === (p.category || '').toLowerCase()
+          )
+        );
+      }
+
+      // If we found targeted matches, use them; otherwise keep items to avoid empty dead-end
+      if (subMatches.length > 0) {
+        items = subMatches;
+      }
+    } else if (rawCategory && rawCategory !== 'all') {
+      // Category-only filter
+      const catMatches = items.filter((p) =>
+        norm.categories.some(
+          (c) => c.toLowerCase() === (p.category || '').toLowerCase()
+        ) || (p.category || '').toLowerCase() === rawCategory.toLowerCase()
+      );
+      if (catMatches.length > 0) {
+        items = catMatches;
+      }
+    }
+
+    // 4. Price bounds filter
     if (minPrice !== null) items = items.filter((p) => p.newPrice >= minPrice);
     if (maxPrice !== null) items = items.filter((p) => p.newPrice <= maxPrice);
 

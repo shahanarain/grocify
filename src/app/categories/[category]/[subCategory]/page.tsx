@@ -198,13 +198,23 @@ export default function SubCategoryProductsPage() {
                                         key={product.id}
                                         className="bg-surface overflow-hidden shadow-sm border border-gray-100 rounded-2xl card-lift"
                                     >
-                                        <div className="relative h-40 bg-white">
-                                            <Image
-                                                src={product.imageUrl}
-                                                alt={product.name}
-                                                fill
-                                                className="object-contain p-2"
-                                            />
+                                        <div className="relative h-40 bg-gray-50 flex items-center justify-center">
+                                            {product.imageUrl ? (
+                                                <Image
+                                                    src={product.imageUrl}
+                                                    alt={product.name}
+                                                    fill
+                                                    className="object-contain p-2"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).style.display = 'none';
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center text-gray-400 text-xs">
+                                                    <span className="text-3xl mb-1">🛒</span>
+                                                    <span>{product.subCategory || 'Grocery'}</span>
+                                                </div>
+                                            )}
                                             {product.discount > 0 && (
                                                 <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                                                     -{product.discount}%
