@@ -107,7 +107,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 text-gray-900 transition-colors duration-200 flex flex-col">
       {/* Top Navigation Bar - Full Width */}
       <nav className="bg-surface/80 backdrop-blur-md shadow-sm border-b border-gray-200 fixed top-0 left-0 right-0 z-20">
         <div className="flex justify-between h-16">
@@ -134,18 +134,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <div className="flex items-center ml-auto space-x-2 sm:space-x-4 px-4 sm:px-6 lg:px-8">
             {/* Theme Toggle */}
             <ThemeToggle />
-
-            {/* Chatbot Button */}
-            <button
-              onClick={() => setIsChatbotOpen(true)}
-              className="btn-primary p-2 rounded-full"
-              title="Open Assistant"
-              aria-label="Open Grocify assistant"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </button>
 
             {user?.photoURL && (
               <Image
@@ -207,8 +195,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={`group flex items-center px-3 py-3 text-base font-medium rounded-xl transition-all ${isActive
-                      ? 'bg-green-100 text-green-900 shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-green-100 text-green-900 shadow-sm dark:bg-green-950 dark:text-green-100'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white'
                       }`}
                   >
                     <span className={`mr-3 ${isActive ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-500'}`}>
@@ -248,7 +236,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   handleLogout();
                   setIsMobileMenuOpen(false);
                 }}
-                className="group flex items-center w-full px-3 py-3 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                className="group flex items-center w-full px-3 py-3 text-base font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white"
               >
                 <svg
                   className="mr-3 h-6 w-6 text-gray-400 group-hover:text-gray-500"
@@ -283,8 +271,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       key={item.name}
                       href={item.href}
                       className={`group flex items-center px-2 py-2 text-sm font-medium rounded-xl transition-all ${isActive
-                        ? 'bg-green-100 text-green-900 shadow-sm'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                        ? 'bg-green-100 text-green-900 shadow-sm dark:bg-green-950 dark:text-green-100'
+                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white'
                         }`}
                     >
                       <span className={`mr-3 ${isActive ? 'text-green-600' : 'text-gray-400 group-hover:text-gray-500'}`}>
@@ -300,7 +288,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <div className="flex-shrink-0 border-t border-gray-200 p-4">
                 <button
                   onClick={handleLogout}
-                  className="group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  className="group flex items-center w-full px-2 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:hover:bg-gray-800 dark:hover:text-white"
                 >
                   <svg
                     className="mr-3 h-6 w-6 text-gray-400 group-hover:text-gray-500"
@@ -332,6 +320,28 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* Chatbot Modal */}
       <Chatbot isOpen={isChatbotOpen} onClose={() => setIsChatbotOpen(false)} />
+
+      {!isChatbotOpen && (
+        <button
+          type="button"
+          onClick={() => setIsChatbotOpen(true)}
+          aria-label="Open Grocify chat assistant"
+          aria-expanded={isChatbotOpen}
+          title="Chat with Grocify"
+          className="btn-primary fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 flex min-h-14 items-center gap-3 rounded-full px-4 text-white shadow-xl shadow-green-950/25 transition-transform hover:scale-[1.03] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-green-300/70 sm:bottom-6 sm:right-6"
+        >
+          <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/20">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full border-2 border-emerald-600 bg-lime-300" />
+          </span>
+          <span className="hidden text-left sm:block">
+            <span className="block text-sm font-semibold leading-4">Ask Grocify</span>
+            <span className="mt-0.5 block text-[10px] font-medium text-white/80">Products, recipes & more</span>
+          </span>
+        </button>
+      )}
     </div>
   );
 }

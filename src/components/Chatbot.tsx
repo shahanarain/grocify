@@ -187,7 +187,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
@@ -199,42 +199,35 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
   return (
     <>
       <div
-        className="fixed inset-0 flex items-center justify-center z-50 p-2 sm:p-4"
-        style={{
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
-          WebkitBackdropFilter: 'blur(4px)'
-        }}
+        className="fixed inset-0 z-50 flex items-end justify-end bg-slate-950/45 p-0 backdrop-blur-sm sm:p-5"
         onClick={onClose}
       >
         <div
-          className="bg-surface rounded-2xl shadow-2xl w-full max-w-2xl h-[680px] max-h-[92vh] flex flex-col border border-gray-200 dark:border-gray-800 overflow-hidden"
+          className="flex h-[100dvh] max-h-[100dvh] w-full flex-col overflow-hidden border border-gray-200 bg-surface text-gray-900 shadow-2xl shadow-black/25 sm:h-[min(760px,calc(100dvh-2.5rem))] sm:max-h-[calc(100dvh-2.5rem)] sm:max-w-[440px] sm:rounded-3xl sm:border-gray-200 dark:sm:border-gray-700"
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
           aria-labelledby="chatbot-title"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-surface">
-            <div className="flex items-center space-x-3">
-              <div className="w-9 h-9 bg-gradient-to-tr from-green-600 to-emerald-400 rounded-full flex items-center justify-center shadow">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="flex items-center justify-between border-b border-gray-200 bg-surface px-4 py-3.5 dark:border-gray-700 sm:px-5">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-green-600 to-emerald-400 text-white shadow-md shadow-green-900/20">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                 </svg>
+                <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-lime-400 dark:border-gray-800" />
               </div>
-              <div>
-                <h3 id="chatbot-title" className="text-base font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
+              <div className="min-w-0">
+                <h3 id="chatbot-title" className="truncate text-sm font-bold text-gray-900 sm:text-base">
                   Grocify Assistant
-                  <span className="text-[10px] font-semibold bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300 px-2 py-0.5 rounded-full">
-                    Grocify help
-                  </span>
                 </h3>
-                <p className="text-xs text-gray-500">Ask about products, recipes, shopping, or using Grocify</p>
+                <p className="mt-0.5 truncate text-[11px] text-gray-500">Products, recipes, and shopping help</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="ml-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 dark:hover:bg-gray-800 dark:hover:text-gray-100"
               aria-label="Close assistant"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,7 +237,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Messages Container */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 space-y-4 overflow-y-auto bg-gray-50/70 p-4 dark:bg-background sm:p-5">
             {messages.map((message) => {
               const isUser = message.sender === 'user';
               const hasRecipe = message.type === 'recipe' && message.recipe;
@@ -257,10 +250,10 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                   <div
                     className={`rounded-2xl px-4 py-2.5 transition ${
                       isUser
-                        ? 'bg-green-600 text-white max-w-[85%]'
+                        ? 'max-w-[88%] rounded-br-md bg-green-600 text-white shadow-sm'
                         : hasRecipe
                         ? 'bg-transparent w-full max-w-[96%]'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 max-w-[88%]'
+                        : 'max-w-[90%] rounded-bl-md border border-gray-200 bg-surface text-gray-900 shadow-sm dark:border-gray-700'
                     }`}
                   >
                     {message.text && (
@@ -289,7 +282,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                           {message.results.slice(0, 4).map((result: ProductResult, index: number) => (
                             <div
                               key={index}
-                              className="bg-surface border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 text-xs shadow-sm flex flex-col justify-between"
+                              className="flex flex-col justify-between rounded-xl border border-gray-200 bg-surface p-2.5 text-xs shadow-sm dark:border-gray-700"
                             >
                               <div>
                                 <div className="flex items-start gap-2">
@@ -299,7 +292,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                                       alt={result.name}
                                       width={48}
                                       height={48}
-                                      className="h-12 w-12 shrink-0 rounded-lg bg-gray-50 object-contain"
+                                      className="h-12 w-12 shrink-0 rounded-lg bg-gray-50 object-contain dark:bg-gray-100"
                                     />
                                   )}
                                   <div className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
@@ -340,7 +333,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                     type="button"
                     onClick={() => sendMessage(prompt)}
                     disabled={isLoading}
-                    className="rounded-full border border-green-200 bg-surface px-3 py-1.5 text-xs text-green-800 transition hover:bg-green-50 disabled:opacity-50 dark:border-green-900 dark:text-green-300 dark:hover:bg-green-950"
+                    className="rounded-full border border-green-200 bg-surface px-3 py-1.5 text-xs font-medium text-green-800 shadow-sm transition hover:border-green-300 hover:bg-green-50 disabled:opacity-50 dark:border-green-800 dark:text-green-300 dark:hover:bg-green-950"
                   >
                     {prompt}
                   </button>
@@ -350,10 +343,10 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
 
             {isLoading && (
               <div className="flex justify-start">
-                <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3 flex items-center space-x-2.5 shadow-sm">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-green-500 border-t-transparent" />
-                  <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
-                    Finding an answer...
+                <div className="flex items-center space-x-2.5 rounded-2xl rounded-bl-md border border-gray-200 bg-surface px-4 py-3 shadow-sm dark:border-gray-700">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-green-500 border-t-transparent" />
+                  <span className="text-xs font-medium text-gray-600">
+                    Thinking...
                   </span>
                 </div>
               </div>
@@ -363,15 +356,16 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
           </div>
 
           {/* Input Bar */}
-          <div className="p-3.5 border-t border-gray-200 dark:border-gray-800 bg-surface">
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
+          <div className="border-t border-gray-200 bg-surface p-3.5 dark:border-gray-700 sm:p-4">
+            <div className="flex items-end gap-2 rounded-2xl border border-gray-300 bg-gray-50 p-1.5 transition focus-within:border-green-500 focus-within:ring-2 focus-within:ring-green-500/20 dark:border-gray-700 dark:bg-surface-2">
+              <textarea
+                rows={1}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about a product, recipe, or shopping on Grocify..."
-                className="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent placeholder-gray-400"
+                placeholder="Message Grocify..."
+                aria-label="Message Grocify assistant"
+                className="max-h-24 min-h-10 flex-1 resize-none border-0 bg-transparent px-3 py-2.5 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:ring-0"
                 disabled={isLoading}
                 autoFocus
               />
@@ -379,8 +373,9 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                 type="button"
                 onClick={() => sendMessage()}
                 disabled={!inputMessage.trim() || isLoading}
-                className="btn-primary p-2.5 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow transition"
+                className="btn-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Send message"
+                title="Send message"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

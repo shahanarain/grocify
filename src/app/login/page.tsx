@@ -69,11 +69,11 @@ export default function LoginPage() {
         </div>
 
         {(process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEMO_MODE === 'true') && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 text-center shadow-sm">
-            <div className="text-xs uppercase tracking-wider font-bold text-emerald-800">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-center shadow-sm dark:border-emerald-900 dark:bg-emerald-950/40">
+            <div className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-200">
               ⚡ Instant 1-Click Access
             </div>
-            <p className="text-xs text-emerald-700 mt-1 mb-3">
+            <p className="mb-3 mt-1 text-xs text-emerald-700 dark:text-emerald-300">
               Explore Grocify with sample grocery data. No account setup is required:
             </p>
             <button
@@ -85,7 +85,7 @@ export default function LoginPage() {
               {loading ? 'Logging in...' : 'Sign in as Demo User (1-Click)'}
             </button>
             <div className="text-[11px] text-gray-500 mt-2.5">
-              Username: <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200">demo@grocify.com</code> | Password: <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-gray-200">GrocifyDemo2026!</code>
+              Username: <code className="rounded border border-gray-200 bg-surface px-1.5 py-0.5 font-mono dark:border-gray-700 dark:bg-surface-2">demo@grocify.com</code> | Password: <code className="rounded border border-gray-200 bg-surface px-1.5 py-0.5 font-mono dark:border-gray-700 dark:bg-surface-2">GrocifyDemo2026!</code>
             </div>
           </div>
         )}
@@ -99,7 +99,7 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:z-10 sm:text-sm ${errors.email
+                className={`appearance-none rounded-none relative block w-full bg-surface px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:z-10 sm:text-sm dark:bg-surface-2 ${errors.email
                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                     : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
                   }`}
@@ -118,7 +118,7 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 autoComplete="current-password"
-                className={`appearance-none rounded-none relative block w-full px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:z-10 sm:text-sm ${errors.password
+                className={`appearance-none rounded-none relative block w-full bg-surface px-3 py-2 border placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:z-10 sm:text-sm dark:bg-surface-2 ${errors.password
                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
                     : 'border-gray-300 focus:ring-green-500 focus:border-green-500'
                   }`}

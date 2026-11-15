@@ -9,6 +9,7 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
+  color-scheme: light;
   --background: #ffffff;
   --foreground: #0f1a13;
 
@@ -28,33 +29,49 @@
   --color-gray-50: #f4f7f4;
 }
 
-/* ----------------------------------------------------------------------------
-   Dark theme: retint the neutral palette via CSS variables. Because Tailwind v4
-   emits every neutral utility as var(--color-gray-*), overriding them here flips
-   the whole app's grays with no markup changes. Colored accents (green/red/...)
-   are intentionally left bright so they pop against the dark surfaces.
----------------------------------------------------------------------------- */
+/* Dark theme colors */
 .dark {
+  color-scheme: dark;
   --background: #0a0e0c;
   --foreground: #e9efea;
   --surface: #141c17;
   --surface-2: #1d2922;
+}
 
-  --color-gray-50: #0a0e0c;   /* page background */
-  --color-gray-100: #1d2922;  /* insets, chips, image placeholders */
-  --color-gray-200: #2a3730;  /* borders, dividers */
-  --color-gray-300: #36453c;  /* borders, disabled */
-  --color-gray-400: #7e8f84;  /* faint icons / text */
-  --color-gray-500: #9aab9f;  /* muted text */
-  --color-gray-600: #b4c3b8;  /* secondary text */
-  --color-gray-700: #cdd8d0;  /* labels */
-  --color-gray-800: #e0e8e2;  /* strong text */
-  --color-gray-900: #eef3ef;  /* headings */
+/* Neutral utilities are remapped only when they are the element's base style.
+   Keeping Tailwind's original gray tokens intact lets `dark:bg-*` and
+   `dark:text-*` utilities keep their normal meaning instead of flipping back
+   to light colors in dark mode. */
+@layer utilities {
+  .dark .bg-gray-50 { background-color: var(--background); }
+  .dark [class~="bg-gray-50/70"] { background-color: color-mix(in srgb, var(--background) 70%, transparent); }
+  .dark .bg-gray-100 { background-color: var(--surface-2); }
+  .dark .bg-gray-200 { background-color: #26332b; }
+  .dark .bg-gray-300 { background-color: #36453c; }
+
+  .dark .text-gray-900 { color: #eef3ef; }
+  .dark .text-gray-800 { color: #e0e8e2; }
+  .dark .text-gray-700 { color: #cdd8d0; }
+  .dark .text-gray-600 { color: #b4c3b8; }
+  .dark .text-gray-500 { color: #9aab9f; }
+  .dark .text-gray-400 { color: #7e8f84; }
+
+  .dark .border-gray-100 { border-color: #26332b; }
+  .dark .border-gray-200,
+  .dark [class~="border-gray-200/80"] { border-color: #2a3730; }
+  .dark .border-gray-300 { border-color: #36453c; }
+
+  .dark .hover\:bg-gray-50:hover { background-color: var(--background); }
+  .dark .hover\:bg-gray-100:hover { background-color: var(--surface-2); }
+  .dark .hover\:bg-gray-200:hover { background-color: #26332b; }
+  .dark .hover\:text-gray-900:hover { color: #eef3ef; }
+  .dark .hover\:text-gray-800:hover { color: #e0e8e2; }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  transition: background-color 180ms ease, color 180ms ease;
 }
 
 html {

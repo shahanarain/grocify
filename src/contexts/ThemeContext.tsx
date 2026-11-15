@@ -23,22 +23,30 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [theme, setTheme] = useState<Theme>('light');
 
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains('dark');
-    setTheme(isDark ? 'dark' : 'light');
+    const syncTheme = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setTheme(isDark ? 'dark' : 'light');
+    };
+    syncTheme();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== 'grocify-theme') return;
+      document.documentElement.classList.toggle('dark', event.newValue === 'dark');
+      syncTheme();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === 'dark' ? 'light' : 'dark';
-      const root = document.documentElement;
-      root.classList.toggle('dark', next === 'dark');
-      try {
-        localStorage.setItem('grocify-theme', next);
-      } catch {
-        // ignore storage errors (private mode, etc.)
-      }
-      return next;
-    });
+    const root = document.documentElement;
+    const next: Theme = root.classList.contains('dark') ? 'light' : 'dark';
+    root.classList.toggle('dark', next === 'dark');
+    setTheme(next);
+    try {
+      localStorage.setItem('grocify-theme', next);
+    } catch {
+      // ignore storage errors (private mode, etc.)
+    }
   };
 
   return (

@@ -3,7 +3,7 @@ import Link from 'next/link';
 export default function SignupPage() {
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <section className="max-w-md w-full rounded-2xl bg-white p-8 text-center shadow">
+      <section className="max-w-md w-full rounded-2xl border border-gray-200 bg-surface p-8 text-center shadow dark:border-gray-700">
         <h1 className="text-2xl font-bold text-gray-900">Demo access only</h1>
         <p className="mt-3 text-sm text-gray-600">
           Account registration is disabled in this demo. Sign in with the demo credentials instead.
