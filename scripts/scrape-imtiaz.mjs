@@ -87,6 +87,7 @@ for (const menuCategory of menu) {
       for (const item of subSection.dish || []) {
         const id = String(item.id || '').trim();
         const title = cleanText(item.name);
+        const description = cleanText(item.description || item.desc || item.details || '');
         const price = Number(item.price);
         const image = cleanText(item.img_url);
         if (!id || !title || !Number.isFinite(price) || price <= 0 || !image || Number(item.status) === 0) continue;
@@ -128,6 +129,7 @@ for (const menuCategory of menu) {
           brand,
           quantity: quantityFrom(title, item.tp_uom),
           title,
+          description,
           image: imageUrl.href,
           storeCount: 1,
           cheapestStore: 'Imtiaz',

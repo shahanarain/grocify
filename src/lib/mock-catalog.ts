@@ -1,6 +1,4 @@
-// Hand-curated demo catalog with sample prices and comparison offers.
-// Current public retailer snapshots are appended from their scraped catalogs.
-// Demo photography is omitted unless a retailer image has been verified.
+// The customer-facing catalog is sourced from Imtiaz's online shop snapshot.
 import { CatalogProduct } from './catalog-types';
 import { EXTRA_CATALOG } from './mock-catalog-extra';
 import scrapedAlfatah from './scraped-alfatah.json';
@@ -9,7 +7,10 @@ import openFoodFactsImages from './openfoodfacts-images.json';
 
 // The demo catalog has no verified retailer/brand photography. Keep these
 // empty instead of presenting unrelated stock photos as real products.
-const img = (_id: string): null => null;
+const img = (id: string): null => {
+  void id;
+  return null;
+};
 
 const BASE_CATALOG: CatalogProduct[] = [
   // ─────────────────────────────────────────────────────────────────────────────
@@ -998,33 +999,12 @@ const BASE_CATALOG: CatalogProduct[] = [
   },
 ];
 
-// Merge catalog sources and keep the first record for each canonical ID.
-const seenCatalogIds = new Set<string>();
-export const MOCK_CATALOG: CatalogProduct[] = [
-  ...BASE_CATALOG,
-  ...EXTRA_CATALOG,
-  ...(scrapedAlfatah as CatalogProduct[]),
-  ...(scrapedImtiaz as CatalogProduct[]),
-].filter((product) => {
-  if (seenCatalogIds.has(product.canonicalId)) return false;
-  seenCatalogIds.add(product.canonicalId);
-  return true;
-});
-
-// Open Food Facts is a secondary image source. Apply only reviewed matches and
-// never replace a retailer-provided product photo.
-const openFoodFactsById = new Map(
-  (openFoodFactsImages as { canonicalId: string; imageUrl: string; productUrl: string; license: string }[])
-    .map((entry) => [entry.canonicalId, entry])
-);
-for (const product of MOCK_CATALOG) {
-  const match = openFoodFactsById.get(product.canonicalId);
-  if (!product.image && match) {
-    product.image = match.imageUrl;
-    product.imageAttribution = {
-      label: 'Open Food Facts (CC BY-SA)',
-      url: match.productUrl,
-      license: match.license,
-    };
-  }
-}
+// Use only Imtiaz listings so imported prices, names, and images share one
+// retailer source and branch context. Keep the old demo data as a last-resort
+// fallback only if the retailer snapshot is empty.
+void EXTRA_CATALOG;
+void scrapedAlfatah;
+void openFoodFactsImages;
+export const MOCK_CATALOG: CatalogProduct[] = (scrapedImtiaz as CatalogProduct[]).length
+  ? [...scrapedImtiaz as CatalogProduct[]]
+  : [...BASE_CATALOG];

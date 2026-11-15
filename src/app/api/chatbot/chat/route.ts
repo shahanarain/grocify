@@ -17,6 +17,8 @@ const initializeChatClient = () => {
     if (!chatClient && apiKey) {
         const openAiClient = new OpenAI({
             apiKey,
+            timeout: 30_000,
+            maxRetries: 1,
             ...(groqApiKey ? { baseURL: 'https://api.groq.com/openai/v1' } : {}),
         });
         const tracingEnabled = process.env.LANGSMITH_TRACING === 'true' && Boolean(process.env.LANGSMITH_API_KEY);
@@ -50,7 +52,24 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const { message } = await request.json();
+        const body = await request.json();
+        const message = body?.message;
+        const history = Array.isArray(body?.history)
+            ? body.history
+                .slice(-10)
+                .filter((entry: unknown): entry is { role: 'user' | 'assistant'; content: string } =>
+                    entry !== null &&
+                    typeof entry === 'object' &&
+                    'role' in entry &&
+                    'content' in entry &&
+                    ((entry as { role?: unknown }).role === 'user' || (entry as { role?: unknown }).role === 'assistant') &&
+                    typeof (entry as { content?: unknown }).content === 'string'
+                )
+                .map((entry: { role: 'user' | 'assistant'; content: string }) => ({
+                    role: entry.role,
+                    content: entry.content.slice(0, 700),
+                }))
+            : [];
 
         if (!message || typeof message !== 'string') {
             return NextResponse.json({ error: 'Message is required' }, { status: 400 });
@@ -63,10 +82,14 @@ export async function POST(request: NextRequest) {
 
         // Product answers always come from the canonical catalog. Do not ask
         // the model to invent Firestore filters or search a different dataset.
-        const productSearchIntent =
-            /\b(products?|catalog|categories)\b/i.test(message) ||
-            /\b(find|show|search|looking for|buy me|recommend)\b/i.test(message) ||
-            /\b(under|below|cheapest)\b/i.test(message);
+        const recipeIntent =
+            /\brecipes?\b|\bmeal (?:ideas?|plans?)\b|\bwhat can i make\b|\bhow (?:do i|to) cook\b|\busing .*ingredients\b/i.test(message);
+        const appHelpIntent = /\b(how do i|how can i|how does|create|make a list|shopping list|smart basket|inventory|follow a store|sign up|log in)\b/i.test(message);
+        const productSearchIntent = !recipeIntent && !appHelpIntent && (
+            /\b(products?|catalog|category|categories)\b/i.test(message) ||
+            /\b(under|below|cheapest|price of|how much does)\b/i.test(message) ||
+            (/\b(find|show|search|looking for|buy me|recommend)\b/i.test(message) && message.split(/\s+/).length >= 2)
+        );
         if (productSearchIntent) {
             const results = searchCatalog(message);
             return NextResponse.json({
@@ -102,7 +125,9 @@ export async function POST(request: NextRequest) {
         // System prompt supporting both recipe generation and sample data queries
         const systemPrompt = `You are Grocify AI, an expert AI grocery & culinary assistant for the Grocify grocery comparison platform.
 
-Your task is to understand user requests and respond in JSON with one of three formats:
+You are a warm, capable conversational assistant for Grocify. Answer naturally, remember the conversation, and ask a short clarifying question when the request is ambiguous. Never claim to have changed an account, list, basket, or order unless an available tool actually did it.
+
+Respond as a JSON object with one of these formats:
 
 1. RECIPE GENERATION & MEAL PLANNING:
 When the user asks for a recipe, meal idea, cooking instructions, or what to make with ingredients (e.g. "give me a chicken biryani recipe for 4", "healthy pasta dinner", "how to cook dal makhani", "breakfast recipe"):
@@ -135,6 +160,7 @@ CRITICAL RULES FOR RECIPES:
 - "catalogKeyword" MUST be a single simple grocery term that supermarket catalogs use (e.g. chicken, milk, butter, oil, rice, pasta, tea, eggs, cheese, flour, yogurt, soap).
 - "quantity" MUST be a numeric value (e.g. 500, 2, 0.5) so it can scale with servings.
 - "unit" is the measurement (g, kg, ml, cup, tbsp, tsp, piece, cloves).
+- Use the previous messages when the user asks to adjust a recipe, change servings, or refers to “that recipe”.
 
 2. GENERAL ADVICE / COOKING TIPS:
 For general cooking tips, ingredient substitutes, or storage questions:
@@ -153,6 +179,7 @@ Always output valid JSON.`;
                 : process.env.OPENAI_MODEL || 'gpt-4o-mini',
             messages: [
                 { role: "system", content: systemPrompt },
+                ...history,
                 { role: "user", content: message }
             ],
             temperature: 0.4,
@@ -225,6 +252,9 @@ Always output valid JSON.`;
 
     } catch (error) {
         console.error('Chatbot error:', error);
-        return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+        return NextResponse.json(
+            { error: 'The assistant could not reach its AI service. Please try again in a moment.' },
+            { status: 502 },
+        );
     }
 }

@@ -10,6 +10,7 @@ function catalogToProduct(p: any) {
   return {
     id: p.canonicalId || p.id,
     name: p.title || p.name,
+    description: p.description || '',
     brand: p.brand || '',
     category: p.category || '',
     subCategory: p.subCategory || '',

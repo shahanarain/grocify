@@ -15,6 +15,7 @@ export interface CatalogProduct {
   brand: string;
   quantity: string;
   title: string;
+  description?: string;
   image: string | null;
   imageAttribution?: { label: string; url: string; license: string };
   sourceSubcategory?: string;

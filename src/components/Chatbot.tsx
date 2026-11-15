@@ -57,7 +57,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
       // Give users FAQ examples that work even when AI is not configured.
       setMessages([{
         id: '1',
-        text: "Hi! I'm your Grocify Assistant. 🛒\n\nI can answer common questions about shopping and using Grocify. Try one of the FAQ suggestions below, or ask about lists, prices, stores, deals, or inventory.",
+        text: "Hi! I'm your Grocify Assistant. 🛒\n\nI can help you find Imtiaz products, plan recipes, compare prices, or use Grocify. What would you like to do?",
         sender: 'bot',
         timestamp: new Date(),
         type: 'message'
@@ -83,17 +83,29 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
 
     try {
       const token = await user?.getIdToken();
+      const history = messages.slice(-10).map((item) => {
+        const contextualDetails = item.recipe
+          ? `Recipe discussed: ${item.recipe.title}. Serves ${item.recipe.servings}. Ingredients: ${item.recipe.ingredients.map((ingredient) => ingredient.name).slice(0, 12).join(', ')}.`
+          : item.results?.length
+            ? `Products shown: ${item.results.slice(0, 8).map((product) => `${product.name} (Rs. ${product.newPrice})`).join('; ')}.`
+            : '';
+        return {
+          role: item.sender === 'user' ? 'user' : 'assistant',
+          content: [item.text, contextualDetails].filter(Boolean).join('\n').slice(0, 700),
+        };
+      });
       const response = await fetch('/api/chatbot/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ message: currentInput })
+        body: JSON.stringify({ message: currentInput, history })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        const failure = await response.json().catch(() => null);
+        throw new Error(failure?.error || 'Failed to get response');
       }
 
       const data = await response.json();
@@ -118,11 +130,12 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
 
     } catch (error) {
       console.error('Chat error:', error);
-      showError('Failed to send message. Please try again.');
+      const errorText = error instanceof Error ? error.message : 'Failed to send message. Please try again.';
+      showError(errorText);
 
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Sorry, I encountered an error. Please try again.',
+        text: errorText,
         sender: 'bot',
         timestamp: new Date(),
         type: 'error'

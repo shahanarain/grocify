@@ -6,10 +6,12 @@ import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/Layout';
 import { ProductCard } from '@/components/ProductCard';
 import { formatCategoryName } from '@/lib/category-name';
+import imtiazCategories from '@/lib/imtiaz-categories.json';
 
 interface Product {
   id: string;
   name: string;
+  description?: string;
   imageUrl: string;
   newPrice: number;
   oldPrice: number;
@@ -32,21 +34,8 @@ interface PaginationInfo {
 // Category hierarchy from database
 const CATEGORIES = [
   { value: 'all', label: 'All Categories' },
-  { value: 'Baking and Cooking', label: 'Baking and Cooking' },
-  { value: 'Beverages', label: 'Beverages' },
-  { value: 'Breakfast', label: 'Breakfast' },
-  { value: 'Candies And BubbleGum', label: 'Candies & BubbleGum' },
-  { value: 'Dairy', label: 'Dairy' },
-  { value: 'Desserts', label: 'Desserts' },
-  { value: 'DishWashing', label: 'DishWashing' },
-  { value: 'Food Staples', label: 'Food Staples' },
-  { value: 'Fresh Products', label: 'Fresh Products' },
-  { value: 'Frozen Foods', label: 'Frozen Foods' },
-  { value: 'Home Essential', label: 'Home Essential' },
-  { value: 'Laundry', label: 'Laundry' },
-  { value: 'Rice and Flour', label: 'Rice and Flour' },
-  { value: 'Snacks', label: 'Snacks' },
-  { value: 'Tea and Coffee', label: 'Tea and Coffee' },
+  ...(imtiazCategories as { name: string; subCategories: string[] }[])
+    .map((category) => ({ value: category.name, label: category.name })),
 ];
 
 export default function HomePage() {
@@ -181,9 +170,7 @@ export default function HomePage() {
         <div>
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900">Home</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Discover products from all stores
-            </p>
+            <p className="mt-1 text-sm text-gray-500">Browse Imtiaz products, prices, and product photos</p>
           </div>
 
           {/* Search and Filter Section */}

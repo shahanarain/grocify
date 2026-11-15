@@ -1,4 +1,4 @@
-import { db } from './demo-database';
+import { MOCK_CATALOG } from './mock-catalog';
 import { CatalogProduct } from './catalog-types';
 
 export interface MatchedProductSummary {
@@ -34,45 +34,27 @@ export interface RecipeData {
 }
 
 /**
- * Matches recipe ingredients to cross-store canonical products in catalogProducts.
+ * Match recipe ingredients against the same catalog shown in Grocify.
  */
 export async function matchIngredientsToCatalog(
   ingredients: Array<{ name: string; quantity: number | string; unit: string; catalogKeyword: string }>
 ): Promise<RecipeIngredientItem[]> {
   try {
-    // Fetch canonical catalog products (up to 500 for matching)
-    const snapshot = await db.collection('catalogProducts').limit(500).get();
-    const catalog: CatalogProduct[] = snapshot.docs.map((doc: any) => ({
-      canonicalId: doc.id,
-      ...doc.data(),
-    }));
-
+    const catalog: CatalogProduct[] = MOCK_CATALOG;
     return ingredients.map((ing) => {
       const parsedQty = typeof ing.quantity === 'number' ? ing.quantity : parseFloat(String(ing.quantity)) || 1;
       const keyword = (ing.catalogKeyword || '').toLowerCase().trim();
       const ingName = (ing.name || '').toLowerCase().trim();
-
-      // Find best match in catalog
-      let candidate: CatalogProduct | undefined = catalog.find((p) => {
-        const title = (p.title || '').toLowerCase();
-        const brand = (p.brand || '').toLowerCase();
-        const subCat = (p.subCategory || '').toLowerCase();
-        const keywords = (p.keywords || []).map((k: string) => k.toLowerCase());
-
-        return (
-          (keyword && (title.includes(keyword) || subCat.includes(keyword) || keywords.includes(keyword))) ||
-          (ingName && title.includes(ingName))
-        );
-      });
-
-      // If no candidate, match with individual tokens
-      if (!candidate && keyword) {
-        const tokens = keyword.split(/\s+/).filter((t) => t.length >= 3);
-        candidate = catalog.find((p) => {
-          const title = (p.title || '').toLowerCase();
-          return tokens.some((t) => title.includes(t));
-        });
-      }
+      const terms = [...new Set(`${keyword} ${ingName}`.split(/[^a-z0-9]+/).filter((term) => term.length > 2))];
+      const candidate = catalog
+        .map((product) => {
+          const title = (product.title || '').toLowerCase();
+          const searchText = `${title} ${product.brand || ''} ${product.subCategory || ''} ${(product.keywords || []).join(' ')}`.toLowerCase();
+          const score = terms.reduce((total, term) => total + (title.includes(term) ? 3 : searchText.includes(term) ? 1 : 0), 0);
+          return { product, score };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score || a.product.minPrice - b.product.minPrice)[0]?.product;
 
       const matchedProduct: MatchedProductSummary | null = candidate
         ? {

@@ -174,19 +174,5 @@ const BASE_CATEGORY_HIERARCHY = [
     }
 ];
 
-const mergedCategories = new Map<string, { name: string; subCategories: string[] }>(
-    BASE_CATEGORY_HIERARCHY.map((category) => [category.name, { ...category, subCategories: [...category.subCategories] }]),
-);
-
-for (const category of imtiazCategories as { name: string; subCategories: string[] }[]) {
-    const existing = mergedCategories.get(category.name);
-    if (!existing) {
-        mergedCategories.set(category.name, { name: category.name, subCategories: [...category.subCategories] });
-        continue;
-    }
-    for (const subCategory of category.subCategories) {
-        if (!existing.subCategories.includes(subCategory)) existing.subCategories.push(subCategory);
-    }
-}
-
-export const CATEGORY_HIERARCHY = [...mergedCategories.values()];
+void BASE_CATEGORY_HIERARCHY;
+export const CATEGORY_HIERARCHY = imtiazCategories as { name: string; subCategories: string[] }[];

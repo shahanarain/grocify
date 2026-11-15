@@ -4,6 +4,7 @@ const SEARCH_STOP_WORDS = new Set([
   'a', 'an', 'and', 'at', 'buy', 'cheapest', 'find', 'for', 'grocery', 'groceries',
   'i', 'me', 'of', 'on', 'please', 'product', 'products', 'show', 'some', 'the',
   'to', 'under', 'below', 'less', 'than', 'price', 'with', 'in', 'at', 'from',
+  'rs', 'pkr', 'rupee', 'rupees', 'how', 'much', 'does', 'cost',
 ]);
 
 export function searchCatalog(message: string, maxResults = 12) {
