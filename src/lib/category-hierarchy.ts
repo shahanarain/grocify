@@ -1,4 +1,6 @@
-export const CATEGORY_HIERARCHY = [
+import imtiazCategories from './imtiaz-categories.json';
+
+const BASE_CATEGORY_HIERARCHY = [
     {
         name: "Baking and Cooking",
         subCategories: [
@@ -48,8 +50,7 @@ export const CATEGORY_HIERARCHY = [
         subCategories: [
             "Bubble Gum",
             "Candies And Jellies",
-            "MarshMallows",
-            "Oil And Ghee"
+            "MarshMallows"
         ]
     },
     {
@@ -172,3 +173,20 @@ export const CATEGORY_HIERARCHY = [
         ]
     }
 ];
+
+const mergedCategories = new Map<string, { name: string; subCategories: string[] }>(
+    BASE_CATEGORY_HIERARCHY.map((category) => [category.name, { ...category, subCategories: [...category.subCategories] }]),
+);
+
+for (const category of imtiazCategories as { name: string; subCategories: string[] }[]) {
+    const existing = mergedCategories.get(category.name);
+    if (!existing) {
+        mergedCategories.set(category.name, { name: category.name, subCategories: [...category.subCategories] });
+        continue;
+    }
+    for (const subCategory of category.subCategories) {
+        if (!existing.subCategories.includes(subCategory)) existing.subCategories.push(subCategory);
+    }
+}
+
+export const CATEGORY_HIERARCHY = [...mergedCategories.values()];

@@ -12,6 +12,9 @@
   },
   "scripts": {
     "dev": "next dev --turbopack",
+    "scrape:alfatah": "node scripts/scrape-alfatah.mjs",
+    "scrape:imtiaz": "node scripts/scrape-imtiaz.mjs",
+    "enrich:openfoodfacts": "node scripts/enrich-openfoodfacts-images.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -19,6 +22,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@next/font": "^14.2.15",
+    "langsmith": "^0.12.0",
     "next": "^16.1.6",
     "openai": "^6.16.0",
     "react": "19.1.0",

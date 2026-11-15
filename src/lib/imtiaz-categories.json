@@ -1,0 +1,115 @@
+[
+  {
+    "name": "Fresh",
+    "subCategories": [
+      "Fruits & vegetables",
+      "Meat & Poultry"
+    ]
+  },
+  {
+    "name": "Snacks & Confectionary",
+    "subCategories": [
+      "Biscuits & Wafers",
+      "Cakes & Rusks",
+      "Chewing Gums & Candies",
+      "Chips & Snacks",
+      "Chocolates"
+    ]
+  },
+  {
+    "name": "Beverages",
+    "subCategories": [
+      "Carbonated Soft Drinks",
+      "Juices & Nectars",
+      "Make to drink",
+      "Sports Drink",
+      "Water"
+    ]
+  },
+  {
+    "name": "Tea & Coffee",
+    "subCategories": [
+      "Coffee",
+      "Instant Tea & Coffee",
+      "Tea",
+      "Tea Whiteners"
+    ]
+  },
+  {
+    "name": "Edible Grocery",
+    "subCategories": [
+      "Baking & Cooking",
+      "Canned/Bottled Foods",
+      "Cereals & Oats",
+      "Dessert",
+      "Flour",
+      "Noodles & Pasta",
+      "Pulses & Grains",
+      "Rice",
+      "Salt, Spices & Herbs",
+      "Sauces, Dressings & Seasonings",
+      "Spreads",
+      "Sugar"
+    ]
+  },
+  {
+    "name": "Baking and Cooking",
+    "subCategories": [
+      "Cooking Oil",
+      "Ghee"
+    ]
+  },
+  {
+    "name": "Dairy",
+    "subCategories": [
+      "Cheese & Cream",
+      "Flavoured Milk",
+      "Milk"
+    ]
+  },
+  {
+    "name": "Frozen",
+    "subCategories": [
+      "Chicken"
+    ]
+  },
+  {
+    "name": "Baby World",
+    "subCategories": [
+      "Baby Feeding Accessories",
+      "Baby Food",
+      "Diapers & Pants",
+      "Hygiene"
+    ]
+  },
+  {
+    "name": "Health & Beauty",
+    "subCategories": [
+      "Body & Skin Care",
+      "Facial Care",
+      "Feminine Care",
+      "Fragrances",
+      "Hair Care",
+      "Men's Grooming",
+      "Oral Care",
+      "Personal Hygiene"
+    ]
+  },
+  {
+    "name": "Home Care",
+    "subCategories": [
+      "Air Fresheners & Home Fragrances",
+      "Cleaning",
+      "Disposable",
+      "Laundry",
+      "Pest Control",
+      "Tissue"
+    ]
+  },
+  {
+    "name": "Pharmacy",
+    "subCategories": [
+      "Husk"
+    ]
+  }
+]

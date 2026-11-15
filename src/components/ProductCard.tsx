@@ -9,6 +9,8 @@ export interface ProductCardData {
   id: string;
   name: string;
   imageUrl: string;
+  imageAttribution?: { label: string; url: string; license: string } | null;
+  sourceLocation?: string | null;
   newPrice: number;
   oldPrice: number;
   quantity: string;
@@ -58,6 +60,11 @@ export function ProductCard({ product, showCategory = false }: ProductCardProps)
             Save {product.discount}%
           </span>
         )}
+        {product.imageAttribution && (
+          <a href={product.imageAttribution.url} target="_blank" rel="noopener noreferrer" className="absolute bottom-1 right-1 rounded bg-white/90 px-1.5 py-0.5 text-[9px] text-gray-600 underline shadow-sm">
+            {product.imageAttribution.label}
+          </a>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col p-3.5 sm:p-4">
@@ -68,11 +75,15 @@ export function ProductCard({ product, showCategory = false }: ProductCardProps)
             </span>
           ) : (
             <span className="truncate text-[11px] font-medium uppercase tracking-wide text-gray-500">
-              {product.supplier || 'Available nearby'}
+              {product.supplier
+                ? `${product.supplier}${product.sourceLocation ? ` · ${product.sourceLocation}` : ''}`
+                : 'Available nearby'}
             </span>
           )}
           {showCategory && product.supplier && (
-            <span className="max-w-[45%] truncate text-[11px] text-gray-500">{product.supplier}</span>
+            <span className="max-w-[55%] truncate text-[11px] text-gray-500">
+              {product.supplier}{product.sourceLocation ? ` · ${product.sourceLocation}` : ''}
+            </span>
           )}
         </div>
 

@@ -3,7 +3,9 @@ import { verifyToken } from '@/lib/auth-middleware';
 import { rateLimit } from '@/lib/rate-limit';
 import { matchIngredientsToCatalog, RecipeData } from '@/lib/recipe-matcher';
 import { getFaqAnswer } from '@/lib/chatbot-faq';
+import { searchCatalog } from '@/lib/catalog-search';
 import OpenAI from 'openai';
+import { wrapOpenAI } from 'langsmith/wrappers';
 
 // The OpenAI client is also compatible with Groq's API. Prefer Groq when its
 // server-side key is configured, while continuing to support OpenAI.
@@ -13,10 +15,20 @@ const initializeChatClient = () => {
     const groqApiKey = process.env.GROQ_API_KEY;
     const apiKey = groqApiKey || process.env.OPENAI_API_KEY;
     if (!chatClient && apiKey) {
-        chatClient = new OpenAI({
+        const openAiClient = new OpenAI({
             apiKey,
             ...(groqApiKey ? { baseURL: 'https://api.groq.com/openai/v1' } : {}),
         });
+        const tracingEnabled = process.env.LANGSMITH_TRACING === 'true' && Boolean(process.env.LANGSMITH_API_KEY);
+        chatClient = tracingEnabled
+            ? wrapOpenAI(openAiClient, {
+                name: 'Grocify chatbot model call',
+                metadata: { provider: groqApiKey ? 'groq' : 'openai' },
+            }) as OpenAI
+            : openAiClient;
+        if (process.env.LANGSMITH_TRACING === 'true' && !process.env.LANGSMITH_API_KEY) {
+            console.warn('LangSmith tracing requested but LANGSMITH_API_KEY is not configured');
+        }
         console.log(groqApiKey ? 'Groq chatbot client initialized' : 'OpenAI chatbot client initialized');
     }
 };
@@ -47,6 +59,25 @@ export async function POST(request: NextRequest) {
         // Cap message length to bound token usage / cost per request.
         if (message.length > 500) {
             return NextResponse.json({ error: 'Message is too long (max 500 characters)' }, { status: 400 });
+        }
+
+        // Product answers always come from the canonical catalog. Do not ask
+        // the model to invent Firestore filters or search a different dataset.
+        const productSearchIntent =
+            /\b(products?|catalog|categories)\b/i.test(message) ||
+            /\b(find|show|search|looking for|buy me|recommend)\b/i.test(message) ||
+            /\b(under|below|cheapest)\b/i.test(message);
+        if (productSearchIntent) {
+            const results = searchCatalog(message);
+            return NextResponse.json({
+                type: 'query',
+                collection: 'catalogProducts',
+                query: null,
+                results,
+                message: results.length
+                    ? `I found ${results.length} matching product${results.length === 1 ? '' : 's'} in the catalog.`
+                    : 'I could not find a close match in the current catalog. Try a product name, brand, or category.',
+            });
         }
 
         // Keep common help available when no AI provider key is configured.
@@ -105,26 +136,7 @@ CRITICAL RULES FOR RECIPES:
 - "quantity" MUST be a numeric value (e.g. 500, 2, 0.5) so it can scale with servings.
 - "unit" is the measurement (g, kg, ml, cup, tbsp, tsp, piece, cloves).
 
-2. GROCERY SEARCH & PRODUCT DATA QUERIES:
-When user asks to search or browse products/stores directly (e.g. "show breakfast products", "find products under 100", "show Diamond store products", "products with discount"):
-Available collections:
-- products: { id, name, imageUrl, newPrice, oldPrice, quantity, category, subCategory, discount, supplier, status, createdAt, url }
-- stores: { id, name, imageUrl, followers, status }
-Available operators: ==, !=, <, <=, >, >=, in, not-in, array-contains
-
-Return JSON:
-{
-  "type": "query",
-  "query": {
-    "where": [{"field": "category", "operator": "==", "value": "Breakfast"}],
-    "orderBy": [{"field": "newPrice", "direction": "asc"}],
-    "limit": 20
-  },
-  "collection": "products",
-  "explanation": "brief explanation of the query"
-}
-
-3. GENERAL ADVICE / COOKING TIPS:
+2. GENERAL ADVICE / COOKING TIPS:
 For general cooking tips, ingredient substitutes, or storage questions:
 Return JSON:
 {
@@ -192,17 +204,6 @@ Always output valid JSON.`;
                     type: 'recipe',
                     message: parsed.explanation || `Here is a recipe for ${fullRecipe.title}:`,
                     recipe: fullRecipe,
-                });
-            }
-
-            // Handle sample data product query
-            if (parsed.type === 'query' && parsed.query) {
-                return NextResponse.json({
-                    type: 'query',
-                    message: `I'll help you find: ${parsed.explanation || 'products'}`,
-                    query: parsed.query,
-                    collection: parsed.collection || 'products',
-                    explanation: parsed.explanation,
                 });
             }
 

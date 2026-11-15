@@ -191,6 +191,9 @@ export function normalizeCategoryParams(
     keywords.push('mayo', 'paste', 'sauce');
 
   // ─── LAUNDRY ───
+  } else if ((sub.includes('bucket') || sub.includes('brush')) && cat.includes('home')) {
+    subCategories.push(rawSubCategory || '');
+    categories.push('Home Essential');
   } else if (sub.includes('detergent') || sub.includes('washing powder') || sub.includes('washing soap')) {
     subCategories.push('Detergent');
     categories.push('Laundry', 'Home Essential');
@@ -236,7 +239,7 @@ export function normalizeCategoryParams(
     subCategories.push('Household Cleaners');
     categories.push('Home Essential');
   } else if (sub.includes('disposable') || sub.includes('foil') || sub.includes('food storage')) {
-    subCategories.push('Household Cleaners');
+    subCategories.push(rawSubCategory || '');
     categories.push('Home Essential');
   } else if (sub.includes('detergent powder') && cat.includes('home')) {
     subCategories.push('Detergent');

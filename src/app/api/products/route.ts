@@ -3,14 +3,10 @@ import { verifyToken } from '@/lib/auth-middleware';
 import { MOCK_CATALOG } from '@/lib/mock-catalog';
 import { normalizeCategoryParams } from '@/lib/category-normalizer';
 
-// Fallback image helper
-const DEFAULT_IMAGE =
-  'https://images.unsplash.com/photo-1542838132-92c53300491e?w=300&h=300&fit=crop&auto=format';
-
 // Converts a CatalogProduct / offer to the Product shape expected by pages
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function catalogToProduct(p: any) {
-  const imgUrl = p.image || p.imageUrl || DEFAULT_IMAGE;
+  const imgUrl = p.image || p.imageUrl || '';
   return {
     id: p.canonicalId || p.id,
     name: p.title || p.name,
@@ -21,6 +17,8 @@ function catalogToProduct(p: any) {
     oldPrice: typeof p.maxPrice === 'number' ? p.maxPrice : (p.oldPrice || 0),
     image: imgUrl,
     imageUrl: imgUrl,
+    imageAttribution: p.imageAttribution || null,
+    sourceLocation: p.sourceLocation || null,
     quantity: p.quantity || '1 unit',
     status: 1,
     supplier: p.cheapestStore || p.supplier || 'Metro',
@@ -87,6 +85,9 @@ export async function GET(request: NextRequest) {
           sub.includes(search)
         );
       });
+      // Show products with verified retailer photos first so the first page
+      // users see contains actual product images where the catalog has them.
+      items.sort((a, b) => Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)));
       return NextResponse.json({
         products: items.slice(0, limit),
         pagination: { limit, total: items.length, hasMore: false, lastDocId: null },
@@ -94,78 +95,84 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 3. Category & SubCategory filter with multi-level fallback
+    // 3. Apply category and subcategory as real filters. The previous fallback
+    // chain could return an entire category (or the whole catalog) when a
+    // subcategory alias had no exact match, making category links look broken.
     if (rawSubCategory) {
-      // Level 1: exact normalized subcategory match
-      let subMatches = items.filter((p) =>
-        norm.subCategories.some(
-          (sc) => sc.toLowerCase() === (p.subCategory || '').toLowerCase()
-        )
-      );
+      const directMatches = rawCategory
+        ? items.filter((p) =>
+            (p.category || '').toLowerCase() === rawCategory.toLowerCase() &&
+            (p.subCategory || '').toLowerCase() === rawSubCategory.toLowerCase()
+          )
+        : [];
 
-      // Level 2: also filter by category if we have category hints
-      if (subMatches.length > 0 && norm.categories.length > 0) {
-        const narrowed = subMatches.filter((p) =>
-          norm.categories.some((c) => c.toLowerCase() === (p.category || '').toLowerCase())
-        );
-        if (narrowed.length > 0) subMatches = narrowed;
-      }
-
-      // Level 3: keyword match on product name, brand, subCategory
-      if (subMatches.length === 0 && norm.keywords.length > 0) {
-        subMatches = items.filter((p) => {
-          const name = (p.name || '').toLowerCase();
-          const brand = (p.brand || '').toLowerCase();
-          const sub = (p.subCategory || '').toLowerCase();
-          return norm.keywords.some((kw) => name.includes(kw) || brand.includes(kw) || sub.includes(kw));
-        });
-        // Try to restrict by category too
-        if (subMatches.length > 0 && norm.categories.length > 0) {
-          const narrowed = subMatches.filter((p) =>
-            norm.categories.some((c) => c.toLowerCase() === (p.category || '').toLowerCase())
-          );
-          if (narrowed.length > 0) subMatches = narrowed;
+      if (directMatches.length > 0) {
+        // The Imtiaz catalog uses its own first-party taxonomy. Honor an exact
+        // pair before applying aliases intended for the hand-curated catalog.
+        items = directMatches;
+      } else {
+        // Enforce the requested aisle as well as the legacy normalized
+        // subcategory. Words like “toilet” and “foil” were mistaken for “oil”
+        // by old imported category metadata.
+        if (norm.subCategories.some((sc) => sc.toLowerCase() === 'cooking oil')) {
+          items = items.filter((p) => /\b(oil|ghee)\b/i.test(p.name || ''));
         }
-      }
 
-      // Level 4: category-only fallback
-      if (subMatches.length === 0 && norm.categories.length > 0) {
-        subMatches = items.filter((p) =>
-          norm.categories.some(
-            (c) => c.toLowerCase() === (p.category || '').toLowerCase()
+        const categoryMatches = norm.categories.length
+          ? items.filter((p) => norm.categories.some(
+              (c) => c.toLowerCase() === (p.category || '').toLowerCase()
+            ))
+          : items;
+
+        const exactSubMatches = categoryMatches.filter((p) =>
+          norm.subCategories.some(
+            (sc) => sc.toLowerCase() === (p.subCategory || '').toLowerCase()
           )
         );
-      }
 
-      // Level 5: raw subcategory keyword in name fallback
-      if (subMatches.length === 0 && rawSubCategory) {
-        const rawWords = rawSubCategory.toLowerCase().split(/[\s,&\/]+/).filter(w => w.length >= 3);
-        subMatches = items.filter((p) => {
-          const name = (p.name || '').toLowerCase();
-          const sub = (p.subCategory || '').toLowerCase();
-          return rawWords.some((w) => name.includes(w) || sub.includes(w));
-        });
-      }
-
-      // Use matches if found; otherwise show all (avoid empty dead-end)
-      if (subMatches.length > 0) {
-        items = subMatches;
+        if (exactSubMatches.length > 0) {
+          const requestedSub = rawSubCategory.toLowerCase();
+          const specificity = requestedSub.includes('olive oil')
+            ? 'olive'
+            : requestedSub.includes('ghee')
+              ? 'ghee'
+              : ['chicken', 'beef', 'mutton'].find((term) => requestedSub.includes(term));
+          const specificMatches = specificity
+            ? exactSubMatches.filter((p) => {
+                const searchable = `${p.name || ''} ${p.brand || ''} ${(p.keywords || []).join(' ')}`.toLowerCase();
+                return searchable.includes(specificity);
+              })
+            : [];
+          items = specificMatches.length > 0 ? specificMatches : exactSubMatches;
+        } else {
+          // Some retailer imports carry broad subcategories such as “Other
+          // Grocery”. Use the normalizer's domain terms against names/keywords,
+          // while keeping the category constraint. An unmatched subcategory
+          // now correctly returns no products instead of unrelated products.
+          const genericTerms = new Set([
+            'and', 'the', 'for', 'with', 'home', 'fresh', 'products', 'food', 'staples',
+            'baking', 'cooking', 'essential', 'essentials', 'category', 'grocery',
+          ]);
+          const terms = norm.keywords.filter((term) => term.length >= 3 && !genericTerms.has(term));
+          items = categoryMatches.filter((p) => {
+            const searchable = `${p.name || ''} ${p.brand || ''} ${(p.keywords || []).join(' ')}`.toLowerCase();
+            return terms.some((term) => searchable.includes(term));
+          });
+        }
       }
     } else if (rawCategory && rawCategory !== 'all') {
-      // Category-only filter
-      const catMatches = items.filter((p) =>
+      items = items.filter((p) =>
         norm.categories.some(
           (c) => c.toLowerCase() === (p.category || '').toLowerCase()
         ) || (p.category || '').toLowerCase() === rawCategory.toLowerCase()
       );
-      if (catMatches.length > 0) {
-        items = catMatches;
-      }
     }
 
     // 4. Price bounds filter
     if (minPrice !== null) items = items.filter((p) => p.newPrice >= minPrice);
     if (maxPrice !== null) items = items.filter((p) => p.newPrice <= maxPrice);
+
+    items.sort((a, b) => Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)));
 
     const total = items.length;
     const startIdx = lastDocId ? items.findIndex((p) => p.id === lastDocId) + 1 : 0;

@@ -1,12 +1,6 @@
 /**
- * Grocify+ Pakistan Grocery Stores Web Scraper & Aggregator
- * Supports live scraping / price fetching from major Pakistani supermarket chains:
- *  - Imtiaz Super Market (imtiaz.com.pk)
- *  - Metro Cash & Carry Pakistan (metro-online.pk)
- *  - Chase Up (chaseup.com.pk)
- *  - Bin Hashim Supermarket (binhashimonline.pk)
- *  - Carrefour Pakistan (carrefour.pk)
- *  - Al-Fatah Department Store (alfatah.pk)
+ * Shared types and normalization helpers for retailer product ingestion.
+ * The only currently verified crawl source is Al-Fatah's public product pages.
  */
 
 export interface ScrapedStoreOffer {
@@ -15,7 +9,7 @@ export interface ScrapedStoreOffer {
   price: number;
   oldPrice?: number;
   url: string;
-  inStock: boolean;
+  inStock?: boolean;
   storeLogo?: string;
 }
 
@@ -39,44 +33,14 @@ export interface ScrapedProduct {
 export interface StoreScraperConfig {
   name: string;
   baseUrl: string;
-  searchEndpoint: string;
-  headers: Record<string, string>;
+  sitemapUrl: string;
 }
 
 export const PAKISTAN_STORES: Record<string, StoreScraperConfig> = {
-  imtiaz: {
-    name: 'Imtiaz',
-    baseUrl: 'https://shop.imtiaz.com.pk',
-    searchEndpoint: 'https://shop.imtiaz.com.pk/api/products/search',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/json, text/plain, */*',
-    },
-  },
-  metro: {
-    name: 'Metro',
-    baseUrl: 'https://www.metro-online.pk',
-    searchEndpoint: 'https://www.metro-online.pk/api/search',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'application/json',
-    },
-  },
-  chaseup: {
-    name: 'Chase Up',
-    baseUrl: 'https://chaseup.com.pk',
-    searchEndpoint: 'https://chaseup.com.pk/search',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    },
-  },
-  binhashim: {
-    name: 'Bin Hashim',
-    baseUrl: 'https://binhashimonline.pk',
-    searchEndpoint: 'https://binhashimonline.pk/search',
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    },
+  alfatah: {
+    name: 'Al-Fatah',
+    baseUrl: 'https://alfatah.pk',
+    sitemapUrl: 'https://alfatah.pk/sitemap.xml',
   },
 };
 

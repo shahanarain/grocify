@@ -3,7 +3,7 @@ import { MOCK_CATALOG } from './mock-catalog';
 export interface MockStore {
   id: string;
   name: string;
-  imageUrl: string;
+  imageUrl: string | null;
   followers: number;
   status: number;
 }

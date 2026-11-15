@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { useModalDismiss } from '@/hooks/useModalDismiss';
@@ -212,10 +213,10 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                 <h3 id="chatbot-title" className="text-base font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1.5">
                   Grocify Assistant
                   <span className="text-[10px] font-semibold bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300 px-2 py-0.5 rounded-full">
-                    FAQ Help
+                    Grocify help
                   </span>
                 </h3>
-                <p className="text-xs text-gray-500">Ask about shopping, products, or using Grocify</p>
+                <p className="text-xs text-gray-500">Ask about products, recipes, shopping, or using Grocify</p>
               </div>
             </div>
             <button
@@ -278,8 +279,19 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                               className="bg-surface border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 text-xs shadow-sm flex flex-col justify-between"
                             >
                               <div>
-                                <div className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
-                                  {result.name}
+                                <div className="flex items-start gap-2">
+                                  {result.imageUrl && (
+                                    <Image
+                                      src={result.imageUrl}
+                                      alt={result.name}
+                                      width={48}
+                                      height={48}
+                                      className="h-12 w-12 shrink-0 rounded-lg bg-gray-50 object-contain"
+                                    />
+                                  )}
+                                  <div className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+                                    {result.name}
+                                  </div>
                                 </div>
                                 {result.supplier && (
                                   <div className="text-[11px] text-gray-500 mt-0.5">{result.supplier}</div>
@@ -345,7 +357,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ isOpen, onClose }) => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask for a recipe, meal idea, or search products..."
+                placeholder="Ask about a product, recipe, or shopping on Grocify..."
                 className="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-xl px-3.5 py-2.5 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent placeholder-gray-400"
                 disabled={isLoading}
                 autoFocus

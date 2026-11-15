@@ -1,12 +1,15 @@
-// Authentic multi-store Pakistani grocery catalog scraped & verified across:
-// Imtiaz Super Market, Metro Cash & Carry, Chase Up, Bin Hashim, Carrefour PK, Al-Fatah.
-// Every product features verified Pakistani market pricing, multi-store comparison offers,
-// and curated authentic grocery photography.
+// Hand-curated demo catalog with sample prices and comparison offers.
+// Current public retailer snapshots are appended from their scraped catalogs.
+// Demo photography is omitted unless a retailer image has been verified.
 import { CatalogProduct } from './catalog-types';
 import { EXTRA_CATALOG } from './mock-catalog-extra';
+import scrapedAlfatah from './scraped-alfatah.json';
+import scrapedImtiaz from './scraped-imtiaz.json';
+import openFoodFactsImages from './openfoodfacts-images.json';
 
-const img = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?w=400&h=400&fit=crop&auto=format&q=80`;
+// The demo catalog has no verified retailer/brand photography. Keep these
+// empty instead of presenting unrelated stock photos as real products.
+const img = (_id: string): null => null;
 
 const BASE_CATALOG: CatalogProduct[] = [
   // ─────────────────────────────────────────────────────────────────────────────
@@ -995,9 +998,33 @@ const BASE_CATALOG: CatalogProduct[] = [
   },
 ];
 
-// Merge base + extra catalog — deduplicated by canonicalId
-const allIds = new Set(BASE_CATALOG.map((p) => p.canonicalId));
+// Merge catalog sources and keep the first record for each canonical ID.
+const seenCatalogIds = new Set<string>();
 export const MOCK_CATALOG: CatalogProduct[] = [
   ...BASE_CATALOG,
-  ...EXTRA_CATALOG.filter((p) => !allIds.has(p.canonicalId)),
-];
+  ...EXTRA_CATALOG,
+  ...(scrapedAlfatah as CatalogProduct[]),
+  ...(scrapedImtiaz as CatalogProduct[]),
+].filter((product) => {
+  if (seenCatalogIds.has(product.canonicalId)) return false;
+  seenCatalogIds.add(product.canonicalId);
+  return true;
+});
+
+// Open Food Facts is a secondary image source. Apply only reviewed matches and
+// never replace a retailer-provided product photo.
+const openFoodFactsById = new Map(
+  (openFoodFactsImages as { canonicalId: string; imageUrl: string; productUrl: string; license: string }[])
+    .map((entry) => [entry.canonicalId, entry])
+);
+for (const product of MOCK_CATALOG) {
+  const match = openFoodFactsById.get(product.canonicalId);
+  if (!product.image && match) {
+    product.image = match.imageUrl;
+    product.imageAttribution = {
+      label: 'Open Food Facts (CC BY-SA)',
+      url: match.productUrl,
+      license: match.license,
+    };
+  }
+}
