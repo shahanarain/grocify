@@ -109,6 +109,20 @@ export async function PUT(
 
     const removeRef = basketRef.collection('items').doc(removeCanonicalId);
     const addRef = basketRef.collection('items').doc(addCanonicalId);
+    const [removeDoc, addDoc, catalogDoc] = await Promise.all([
+      removeRef.get(),
+      addRef.get(),
+      db.collection('catalogProducts').doc(addCanonicalId).get(),
+    ]);
+    if (!removeDoc.exists) {
+      return NextResponse.json({ error: 'Item not in basket' }, { status: 404 });
+    }
+    if (addDoc.exists) {
+      return NextResponse.json({ error: 'Replacement item is already in basket' }, { status: 400 });
+    }
+    if (!catalogDoc.exists) {
+      return NextResponse.json({ error: 'Replacement catalog product not found' }, { status: 404 });
+    }
 
     const batch = db.batch();
     batch.delete(removeRef);

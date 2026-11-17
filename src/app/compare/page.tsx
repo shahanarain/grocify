@@ -33,10 +33,12 @@ export default function ComparePage() {
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const fetchPage = useCallback(async (reset: boolean) => {
     if (!user) return;
     if (reset) setLoading(true); else setLoadingMore(true);
+    setLoadError('');
     try {
       const token = await user.getIdToken();
       const nextOffset = reset ? 0 : offset;
@@ -45,12 +47,16 @@ export default function ComparePage() {
       if (query) params.set('search', query);
       const res = await fetch(`/api/catalog?${params}`, { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Could not load comparable products.');
       const products: CatalogProduct[] = data?.products ?? [];
       const pagination = data?.pagination ?? {};
       setProducts((prev) => (reset ? products : [...prev, ...products]));
       setTotal(pagination.total ?? products.length);
       setHasMore(pagination.hasMore ?? false);
       setOffset(nextOffset + PAGE);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Could not load comparable products.');
+      if (reset) setProducts([]);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -112,6 +118,8 @@ export default function ComparePage() {
               </div>
             ))}
           </div>
+        ) : loadError ? (
+          <div className="text-center py-16 text-red-600">{loadError}</div>
         ) : products.length === 0 ? (
           <div className="text-center py-16 text-gray-500">No comparable products found for these filters.</div>
         ) : (

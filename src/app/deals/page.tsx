@@ -21,6 +21,7 @@ export default function DealsPage() {
   const [baskets, setBaskets] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [taking, setTaking] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -29,8 +30,11 @@ export default function DealsPage() {
         const token = await user.getIdToken();
         const res = await fetch('/api/deals', { headers: { Authorization: `Bearer ${token}` } });
         const data = await res.json();
+        if (!res.ok) throw new Error(data?.error || 'Could not load Smart Deals.');
         setTopSavings(data.topSavings || []);
         setBaskets(data.baskets || []);
+      } catch (err) {
+        setLoadError(err instanceof Error ? err.message : 'Could not load Smart Deals.');
       } finally {
         setLoading(false);
       }
@@ -82,7 +86,11 @@ export default function DealsPage() {
           </div>
         ) : (
           <>
+            {loadError && <div role="alert" className="mb-5 rounded-xl bg-red-50 p-4 text-sm text-red-700">{loadError}</div>}
             {/* Curated smart baskets */}
+            {baskets.length === 0 && !loadError && (
+              <div className="mb-8 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">No ready-made deals are available right now. You can still add products to a custom basket from Compare.</div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
               {baskets.map((deal) => (
                 <div key={deal.id} className="bg-surface rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">

@@ -30,7 +30,10 @@ export default function BasketsPage() {
       const token = await user.getIdToken();
       const res = await fetch('/api/baskets', { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Failed to load baskets');
       setBaskets(data.baskets || []);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to load baskets');
     } finally {
       setLoading(false);
     }
@@ -51,7 +54,10 @@ export default function BasketsPage() {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: name.trim() }),
       });
-      if (!res.ok) throw new Error('Failed to create basket');
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data?.error || 'Failed to create basket');
+      }
       setName('');
       await load();
     } catch (err: unknown) {

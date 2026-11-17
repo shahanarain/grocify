@@ -1006,5 +1006,11 @@ void EXTRA_CATALOG;
 void scrapedAlfatah;
 void openFoodFactsImages;
 export const MOCK_CATALOG: CatalogProduct[] = (scrapedImtiaz as CatalogProduct[]).length
-  ? [...scrapedImtiaz as CatalogProduct[]]
+  // The live demo snapshot is from one retailer, so it cannot power cross-store
+  // comparison or the curated deals on its own. Keep those single-store products
+  // and include the curated cross-store catalog used by compare/deal features.
+  ? [...new Map(
+      [...(scrapedImtiaz as CatalogProduct[]), ...BASE_CATALOG]
+        .map((product) => [product.canonicalId, product] as const)
+    ).values()]
   : [...BASE_CATALOG];

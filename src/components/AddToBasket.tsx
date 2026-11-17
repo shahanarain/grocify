@@ -22,6 +22,7 @@ interface AddToBasketProps {
 export const AddToBasket: React.FC<AddToBasketProps> = ({ product, onSuccess }) => {
   const [baskets, setBaskets] = useState<Basket[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingBaskets, setLoadingBaskets] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
@@ -33,14 +34,20 @@ export const AddToBasket: React.FC<AddToBasketProps> = ({ product, onSuccess }) 
 
   const fetchBaskets = async () => {
     if (!user) return;
+    setLoadingBaskets(true);
     try {
       const token = await user.getIdToken();
       const res = await fetch('/api/baskets', { headers: { Authorization: `Bearer ${token}` } });
-      if (!res.ok) throw new Error('Failed to fetch baskets');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData?.error || 'Failed to fetch baskets');
+      }
       const data = await res.json();
-      setBaskets(data.baskets);
+      setBaskets(data.baskets || []);
     } catch (err) {
-      console.error(err);
+      showError(err instanceof Error ? err.message : 'Failed to fetch baskets');
+    } finally {
+      setLoadingBaskets(false);
     }
   };
 
@@ -137,7 +144,8 @@ export const AddToBasket: React.FC<AddToBasketProps> = ({ product, onSuccess }) 
             {!showCreate ? (
               <div>
                 <div className="space-y-2 max-h-40 overflow-y-auto mb-4">
-                  {baskets.length === 0 && <p className="text-sm text-gray-400">No baskets yet — create one below.</p>}
+                  {loadingBaskets && <p className="text-sm text-gray-500">Loading your baskets...</p>}
+                  {!loadingBaskets && baskets.length === 0 && <p className="text-sm text-gray-400">No baskets yet — create one below.</p>}
                   {baskets.map((b) => (
                     <button
                       key={b.id}

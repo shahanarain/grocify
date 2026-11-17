@@ -27,21 +27,22 @@ interface CompareCardProps {
 
 export const CompareCard: React.FC<CompareCardProps> = ({ product, action }) => {
   const [open, setOpen] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const offers = [...(product.offers || [])].sort((a, b) => a.price - b.price);
 
   return (
     <div className="bg-surface overflow-hidden shadow-sm border border-gray-100 rounded-2xl card-lift flex flex-col">
       <div className="relative h-36 bg-gray-50">
-        {product.image ? (
+        {product.image && !imageFailed ? (
           <Image
             src={product.image}
             alt={product.title}
             fill
             className="object-contain p-2"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="flex flex-col items-center justify-center h-full gap-1">
+          <div className="flex flex-col items-center justify-center h-full gap-1" aria-label="Product image unavailable">
             <span className="text-4xl">{categoryEmoji(product.category)}</span>
             <span className="text-[10px] text-gray-400">{formatCategoryName(product.subCategory)}</span>
           </div>
