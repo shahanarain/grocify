@@ -999,6 +999,44 @@ const BASE_CATALOG: CatalogProduct[] = [
   },
 ];
 
+// Reuse pack shots from the retailer snapshots only where the product identity
+// is clear. The demo prices are cross-store examples, but a real retailer photo
+// is still more useful than a blank image or an unrelated stock photo.
+const VERIFIED_DEMO_IMAGE_SOURCE_IDS: Record<string, string> = {
+  'tea-tapal-elaichi-170g': 'imtiaz-367909',
+  'tea-tapal-green-tea-30s': 'imtiaz-368341',
+  'milk-everyday-900g': 'imtiaz-363732',
+  'coffee-nescafe-classic-200g': 'imtiaz-364594',
+  'oil-dalda-cooking-5l': 'imtiaz-363460',
+  'oil-habib-canola-5l': 'imtiaz-363459',
+  'oil-mezan-canola-5l': 'imtiaz-363445',
+  'milk-full-cream-1l': 'alfatah-nestle-milkpak-milk-full-cream-carton-1',
+  'sharbat-rooh-afza-800ml': 'imtiaz-363710',
+  'drink-tang-mango-750g': 'imtiaz-363714',
+  'water-mineral-1-5l': 'imtiaz-363662',
+  'pasta-spaghetti-500g': 'imtiaz-364945',
+  'ketchup-national-800g': 'imtiaz-365039',
+  'dishwash-vim-500ml': 'imtiaz-366840',
+  'cleaner-harpic-500ml': 'imtiaz-365839',
+  'soap-dettol-pack3': 'imtiaz-365533',
+  'toothpaste-colgate-140g': 'imtiaz-365650',
+  'tomato-fresh-1kg': 'imtiaz-363780',
+  'potato-fresh-1kg': 'imtiaz-374869',
+  'garlic-fresh-500g': 'imtiaz-363778',
+  'ginger-fresh-500g': 'imtiaz-363775',
+  'chicken-boneless-1kg': 'imtiaz-363809',
+  'beef-boneless-1kg': 'imtiaz-363801',
+};
+
+const scrapedImagesById = new Map(
+  [...(scrapedImtiaz as CatalogProduct[]), ...(scrapedAlfatah as CatalogProduct[])]
+    .map((product) => [product.canonicalId, product.image] as const)
+);
+const catalogWithVerifiedImages = BASE_CATALOG.map((product) => ({
+  ...product,
+  image: product.image || scrapedImagesById.get(VERIFIED_DEMO_IMAGE_SOURCE_IDS[product.canonicalId]) || null,
+}));
+
 // Use only Imtiaz listings so imported prices, names, and images share one
 // retailer source and branch context. Keep the old demo data as a last-resort
 // fallback only if the retailer snapshot is empty.
@@ -1010,7 +1048,7 @@ export const MOCK_CATALOG: CatalogProduct[] = (scrapedImtiaz as CatalogProduct[]
   // comparison or the curated deals on its own. Keep those single-store products
   // and include the curated cross-store catalog used by compare/deal features.
   ? [...new Map(
-      [...(scrapedImtiaz as CatalogProduct[]), ...BASE_CATALOG]
+      [...(scrapedImtiaz as CatalogProduct[]), ...catalogWithVerifiedImages]
         .map((product) => [product.canonicalId, product] as const)
     ).values()]
-  : [...BASE_CATALOG];
+  : catalogWithVerifiedImages;

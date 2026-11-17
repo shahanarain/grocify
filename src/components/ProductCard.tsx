@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import Image from 'next/image';
 import { AddToList } from '@/components/AddToList';
+import { CatalogImage } from '@/components/CatalogImage';
 import { formatCategoryName } from '@/lib/category-name';
 
 export interface ProductCardData {
@@ -29,30 +28,24 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, showCategory = false }: ProductCardProps) {
-  const [imageFailed, setImageFailed] = useState(false);
-
   return (
     <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200/80 bg-surface shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-green-200 hover:shadow-lg hover:shadow-green-950/5">
       <div className="relative aspect-square overflow-hidden bg-gray-50">
-        {product.imageUrl && !imageFailed ? (
-          <Image
-            src={product.imageUrl}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 20vw"
-            className="object-contain p-4 transition-transform duration-300 group-hover:scale-[1.04]"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-gray-400">
-            <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="10" cy="20" r="1" fill="currentColor" />
-              <circle cx="18" cy="20" r="1" fill="currentColor" />
-            </svg>
-            <span className="text-xs">{formatCategoryName(product.subCategory) || 'Grocery'}</span>
-          </div>
-        )}
+        <CatalogImage
+          src={product.imageUrl}
+          alt={product.name}
+          className="absolute inset-0 h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-[1.04]"
+          fallback={(
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-gray-400">
+              <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="10" cy="20" r="1" fill="currentColor" />
+                <circle cx="18" cy="20" r="1" fill="currentColor" />
+              </svg>
+              <span className="text-xs">{formatCategoryName(product.subCategory) || 'Grocery'}</span>
+            </div>
+          )}
+        />
         {product.discount > 0 && (
           <span className="absolute left-3 top-3 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
             Save {product.discount}%

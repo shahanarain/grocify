@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { CatalogImage } from '@/components/CatalogImage';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
@@ -112,11 +112,14 @@ export default function DealsPage() {
                     <div className="flex flex-wrap gap-2 mb-4">
                       {deal.items.map((it) => (
                         <div key={it.canonicalId} className="relative w-14 h-14 bg-white rounded-lg border border-gray-100 overflow-hidden" title={it.title}>
-                          {it.image ? (
-                            <Image src={it.image} alt={it.title} fill className="object-contain p-1" />
-                          ) : (
-                            <div className="flex items-center justify-center h-full text-[9px] text-gray-300">{it.brand}</div>
-                          )}
+                          <CatalogImage
+                            src={it.image}
+                            alt={it.title}
+                            className="absolute inset-0 h-full w-full object-contain p-1"
+                            fallback={(
+                              <div className="flex items-center justify-center h-full text-[9px] text-gray-300">{it.brand}</div>
+                            )}
+                          />
                         </div>
                       ))}
                     </div>

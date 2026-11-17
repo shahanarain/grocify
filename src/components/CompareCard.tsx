@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import { CatalogImage } from '@/components/CatalogImage';
 import { CatalogProduct } from '@/lib/catalog-types';
 import { formatCategoryName } from '@/lib/category-name';
 
@@ -27,26 +27,22 @@ interface CompareCardProps {
 
 export const CompareCard: React.FC<CompareCardProps> = ({ product, action }) => {
   const [open, setOpen] = useState(false);
-  const [imageFailed, setImageFailed] = useState(false);
   const offers = [...(product.offers || [])].sort((a, b) => a.price - b.price);
 
   return (
     <div className="bg-surface overflow-hidden shadow-sm border border-gray-100 rounded-2xl card-lift flex flex-col">
       <div className="relative h-36 bg-gray-50">
-        {product.image && !imageFailed ? (
-          <Image
-            src={product.image}
-            alt={product.title}
-            fill
-            className="object-contain p-2"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <div className="flex flex-col items-center justify-center h-full gap-1" aria-label="Product image unavailable">
-            <span className="text-4xl">{categoryEmoji(product.category)}</span>
-            <span className="text-[10px] text-gray-400">{formatCategoryName(product.subCategory)}</span>
-          </div>
-        )}
+        <CatalogImage
+          src={product.image}
+          alt={product.title}
+          className="absolute inset-0 h-full w-full object-contain p-2"
+          fallback={(
+            <div className="flex flex-col items-center justify-center h-full gap-1" aria-label="Product image unavailable">
+              <span className="text-4xl">{categoryEmoji(product.category)}</span>
+              <span className="text-[10px] text-gray-400">{formatCategoryName(product.subCategory)}</span>
+            </div>
+          )}
+        />
         {product.savingPct > 0 && (
           <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow">
             Save {product.savingPct}%
