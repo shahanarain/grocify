@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Partner and user guide
+
+See [PARTNER_USER_GUIDE.md](PARTNER_USER_GUIDE.md) for a complete walkthrough of the app, its demo limitations, and how product and price data are collected and used.
+
 ## Getting Started
 
 First, run the development server:
