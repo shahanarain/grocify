@@ -10,8 +10,22 @@ import { CatalogProduct } from '@/lib/catalog-types';
 import Link from 'next/link';
 
 const CATEGORIES = [
-  'all', 'Dairy', 'Beverages', 'Breakfast', 'Tea and Coffee', 'Snacks',
-  'Home Essential', 'Laundry', 'DishWashing', 'Desserts', 'Fresh Products',
+  'all',
+  'Baking and Cooking',
+  'Beverages',
+  'Breakfast',
+  'Candies And BubbleGum',
+  'Dairy',
+  'Desserts',
+  'DishWashing',
+  'Food Staples',
+  'Fresh Products',
+  'Frozen Foods',
+  'Home Essential',
+  'Laundry',
+  'Rice and Flour',
+  'Snacks',
+  'Tea and Coffee',
 ];
 const SORTS = [
   { value: 'savings', label: 'Biggest savings' },

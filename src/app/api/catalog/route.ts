@@ -25,43 +25,40 @@ export async function GET(request: NextRequest) {
     // Try Firestore first; fall back to mock data when Admin SDK is not configured.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let items: any[] = [];
-    let usedMock = false;
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const admin = await import('@/lib/demo-database') as any;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let query: any = admin.db.collection('catalogProducts');
-      if (category && category !== 'all') {
-        query = query.where('category', '==', category);
-      } else if (subCategory) {
-        query = query.where('subCategory', '==', subCategory);
-      }
-      const snapshot = await query.limit(400).get();
+      const snapshot = await admin.db.collection('catalogProducts').get();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const firestoreItems = snapshot.docs.map((doc: any) => ({ canonicalId: doc.id, ...doc.data() }));
-      if (firestoreItems.length > 0) {
-        items = firestoreItems;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const comparable = firestoreItems.filter((p: any) => (p.storeCount || 0) >= minStores);
+      if (comparable.length > 0) {
+        items = comparable;
       } else {
-        items = [...MOCK_CATALOG];
-        usedMock = true;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        items = MOCK_CATALOG.filter((p: any) => (p.storeCount || 0) >= minStores);
       }
     } catch {
       // Firestore not configured — use local mock data
-      items = [...MOCK_CATALOG];
-      usedMock = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      items = MOCK_CATALOG.filter((p: any) => (p.storeCount || 0) >= minStores);
     }
 
-    // Apply category filter when using mock data (Firestore filters via query)
-    if (usedMock) {
-      if (category && category !== 'all') {
-        items = items.filter((p) => p.category === category);
-      } else if (subCategory) {
-        items = items.filter((p) => p.subCategory === subCategory);
-      }
+    // Apply category or subCategory filter with normalizer support
+    if (category && category !== 'all') {
+      const normCat = category.toLowerCase().replace(/[^a-z0-9]/g, '');
+      items = items.filter((p: any) => {
+        const pCat = (p.category || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return pCat === normCat || pCat.includes(normCat) || normCat.includes(pCat);
+      });
+    } else if (subCategory) {
+      const normSub = subCategory.toLowerCase().replace(/[^a-z0-9]/g, '');
+      items = items.filter((p: any) => {
+        const pSub = (p.subCategory || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        return pSub === normSub || pSub.includes(normSub) || normSub.includes(pSub);
+      });
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    items = items.filter((p: any) => (p.storeCount || 0) >= minStores);
 
     if (search && search.length >= 2) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

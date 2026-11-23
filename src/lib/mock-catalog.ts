@@ -1037,18 +1037,25 @@ const catalogWithVerifiedImages = BASE_CATALOG.map((product) => ({
   image: product.image || scrapedImagesById.get(VERIFIED_DEMO_IMAGE_SOURCE_IDS[product.canonicalId]) || null,
 }));
 
-// Use only Imtiaz listings so imported prices, names, and images share one
-// retailer source and branch context. Keep the old demo data as a last-resort
-// fallback only if the retailer snapshot is empty.
-void EXTRA_CATALOG;
+// Combine base curated catalog + extra catalog with verified images
+const comparableCatalog: CatalogProduct[] = [
+  ...catalogWithVerifiedImages,
+  ...EXTRA_CATALOG,
+];
+
+// Single-store retailer imports (Imtiaz, etc.)
+const singleStoreImports = (scrapedImtiaz as CatalogProduct[]) || [];
+
 void scrapedAlfatah;
 void openFoodFactsImages;
-export const MOCK_CATALOG: CatalogProduct[] = (scrapedImtiaz as CatalogProduct[]).length
-  // The live demo snapshot is from one retailer, so it cannot power cross-store
-  // comparison or the curated deals on its own. Keep those single-store products
-  // and include the curated cross-store catalog used by compare/deal features.
-  ? [...new Map(
-      [...(scrapedImtiaz as CatalogProduct[]), ...catalogWithVerifiedImages]
-        .map((product) => [product.canonicalId, product] as const)
-    ).values()]
-  : catalogWithVerifiedImages;
+
+// Multi-store comparable products come FIRST so cross-store compare, deals,
+// and smart baskets have immediate access to all verified multi-store offers.
+export const MOCK_CATALOG: CatalogProduct[] = singleStoreImports.length
+  ? [
+      ...comparableCatalog,
+      ...singleStoreImports.filter(
+        (p) => !new Set(comparableCatalog.map((c) => c.canonicalId)).has(p.canonicalId)
+      ),
+    ]
+  : comparableCatalog;

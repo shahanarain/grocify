@@ -16,6 +16,11 @@ const CATEGORY_EMOJI: Record<string, string> = {
   'DishWashing': '🍽️',
   'Desserts': '🍨',
   'Fresh Products': '🥦',
+  'Baking and Cooking': '🍳',
+  'Food Staples': '🌾',
+  'Frozen Foods': '🧊',
+  'Rice and Flour': '🍚',
+  'Candies And BubbleGum': '🍬',
 };
 const categoryEmoji = (cat: string) => CATEGORY_EMOJI[cat] ?? '🛒';
 
