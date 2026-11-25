@@ -7,6 +7,7 @@ interface CatalogImageProps {
   alt: string;
   className: string;
   fallback: ReactNode;
+  backupSrc?: string;
 }
 
 /**
@@ -14,24 +15,35 @@ interface CatalogImageProps {
  * A native img keeps those requests in the visitor's browser and avoids Next Image's
  * host allowlist for catalog URLs that vary by retailer or Firestore data.
  */
-export function CatalogImage({ src, alt, className, fallback }: CatalogImageProps) {
+export function CatalogImage({ src, alt, className, fallback, backupSrc }: CatalogImageProps) {
+  const [currentSrc, setCurrentSrc] = useState(src || backupSrc);
+  const [hasTriedBackup, setHasTriedBackup] = useState(false);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    setCurrentSrc(src || backupSrc);
+    setHasTriedBackup(false);
     setFailed(false);
-  }, [src]);
+  }, [src, backupSrc]);
 
-  if (!src || failed) return <>{fallback}</>;
+  if (!currentSrc || failed) return <>{fallback}</>;
 
   // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
-      src={src}
+      src={currentSrc}
       alt={alt}
       className={className}
       loading="lazy"
       decoding="async"
-      onError={() => setFailed(true)}
+      onError={() => {
+        if (!hasTriedBackup && backupSrc && backupSrc !== currentSrc) {
+          setHasTriedBackup(true);
+          setCurrentSrc(backupSrc);
+        } else {
+          setFailed(true);
+        }
+      }}
     />
   );
 }

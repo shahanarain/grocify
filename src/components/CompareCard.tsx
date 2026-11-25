@@ -24,6 +24,24 @@ const CATEGORY_EMOJI: Record<string, string> = {
 };
 const categoryEmoji = (cat: string) => CATEGORY_EMOJI[cat] ?? '🛒';
 
+const CATEGORY_BACKUP_IMAGES: Record<string, string> = {
+  'Tea and Coffee': 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=400&h=400&fit=crop&auto=format',
+  'Dairy': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?w=400&h=400&fit=crop&auto=format',
+  'Beverages': 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=400&h=400&fit=crop&auto=format',
+  'Breakfast': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=400&fit=crop&auto=format',
+  'Snacks': 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&h=400&fit=crop&auto=format',
+  'Home Essential': 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&h=400&fit=crop&auto=format',
+  'Laundry': 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?w=400&h=400&fit=crop&auto=format',
+  'DishWashing': 'https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?w=400&h=400&fit=crop&auto=format',
+  'Desserts': 'https://images.unsplash.com/photo-1549007994-cb92caebd54b?w=400&h=400&fit=crop&auto=format',
+  'Fresh Products': 'https://images.unsplash.com/photo-1540420773420-3366772f4999?w=400&h=400&fit=crop&auto=format',
+  'Baking and Cooking': 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=400&h=400&fit=crop&auto=format',
+  'Food Staples': 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&h=400&fit=crop&auto=format',
+  'Rice and Flour': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop&auto=format',
+  'Candies And BubbleGum': 'https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?w=400&h=400&fit=crop&auto=format',
+  'Frozen Foods': 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400&h=400&fit=crop&auto=format',
+};
+
 interface CompareCardProps {
   product: CatalogProduct;
   // Optional action rendered at the bottom of the card (e.g. add/remove basket button).
@@ -34,6 +52,7 @@ export const CompareCard: React.FC<CompareCardProps> = ({ product, action }) => 
   const [open, setOpen] = useState(false);
   const offers = [...(product.offers || [])].sort((a, b) => a.price - b.price);
   const imageSrc = product.image || (product as unknown as { imageUrl?: string }).imageUrl || null;
+  const backupSrc = CATEGORY_BACKUP_IMAGES[product.category] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=400&fit=crop&auto=format';
 
   return (
     <div className="bg-surface overflow-hidden shadow-sm border border-gray-100 rounded-2xl card-lift flex flex-col">
@@ -42,6 +61,7 @@ export const CompareCard: React.FC<CompareCardProps> = ({ product, action }) => 
           src={imageSrc}
           alt={product.title}
           className="absolute inset-0 h-full w-full object-contain p-2"
+          backupSrc={backupSrc}
           fallback={(
             <div className="flex flex-col items-center justify-center h-full gap-1" aria-label="Product image unavailable">
               <span className="text-4xl">{categoryEmoji(product.category)}</span>
