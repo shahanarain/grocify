@@ -5,12 +5,8 @@ import scrapedAlfatah from './scraped-alfatah.json';
 import scrapedImtiaz from './scraped-imtiaz.json';
 import openFoodFactsImages from './openfoodfacts-images.json';
 
-// The demo catalog has no verified retailer/brand photography. Keep these
-// empty instead of presenting unrelated stock photos as real products.
-const img = (id: string): null => {
-  void id;
-  return null;
-};
+const img = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?w=400&h=400&fit=crop&auto=format&q=80`;
 
 const BASE_CATALOG: CatalogProduct[] = [
   // ─────────────────────────────────────────────────────────────────────────────
@@ -1034,7 +1030,7 @@ const scrapedImagesById = new Map(
 );
 const catalogWithVerifiedImages = BASE_CATALOG.map((product) => ({
   ...product,
-  image: product.image || scrapedImagesById.get(VERIFIED_DEMO_IMAGE_SOURCE_IDS[product.canonicalId]) || null,
+  image: scrapedImagesById.get(VERIFIED_DEMO_IMAGE_SOURCE_IDS[product.canonicalId]) || product.image || null,
 }));
 
 // Combine base curated catalog + extra catalog with verified images

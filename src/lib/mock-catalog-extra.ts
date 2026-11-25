@@ -2,8 +2,8 @@
 // Auto-merged into MOCK_CATALOG at runtime via mock-catalog.ts
 import { CatalogProduct } from './catalog-types';
 
-// No verified pack shots are available for these demo entries.
-const img = (_id: string): null => null;
+const img = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?w=400&h=400&fit=crop&auto=format&q=80`;
 
 export const EXTRA_CATALOG: CatalogProduct[] = [
 

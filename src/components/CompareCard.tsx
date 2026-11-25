@@ -33,12 +33,13 @@ interface CompareCardProps {
 export const CompareCard: React.FC<CompareCardProps> = ({ product, action }) => {
   const [open, setOpen] = useState(false);
   const offers = [...(product.offers || [])].sort((a, b) => a.price - b.price);
+  const imageSrc = product.image || (product as unknown as { imageUrl?: string }).imageUrl || null;
 
   return (
     <div className="bg-surface overflow-hidden shadow-sm border border-gray-100 rounded-2xl card-lift flex flex-col">
       <div className="relative h-36 bg-gray-50">
         <CatalogImage
-          src={product.image}
+          src={imageSrc}
           alt={product.title}
           className="absolute inset-0 h-full w-full object-contain p-2"
           fallback={(
